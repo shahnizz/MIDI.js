@@ -1,23 +1,16 @@
 {
-  "name": "midi",
+  "name": "MIDI.js",
   "version": "0.3.0",
-  "description": "Library to assist in creating HTML5 MIDI apps.",
-  "author": "Michael Deal",
-  "contributors": [
-    "Sergi Mansilla",
-    "Daniel van der Meer",
-    "Mohit Muthanna",
-    "Pete Otaqui"
-  ],
+  "description": "A commonJS fork of mudcube's midiJS",
+  "author": "Musescore",
   "repository": {
     "type": "git",
-    "url": "git://github.com/mudcube/MIDI.js.git"
+    "url": "git://github.com/musescore/MIDI.js.git"
   },
   "main": "./build/MIDI.min.js",
   "license": "MIT",
-  "devDependencies": {
-    "grunt": "~0.4.0",
-    "grunt-contrib-concat": "~0.1.3",
-    "grunt-contrib-uglify": "~0.1.2"
-  }
+  "bugs": {
+    "url": "https://github.com/musescore/MIDI.js/issues"
+  },
+  "homepage": "https://github.com/musescore/MIDI.js#readme"
 }
