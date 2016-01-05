@@ -9,10 +9,7 @@
 	----------------------------------------------------------
 */
 
-if (typeof MIDI === 'undefined') MIDI = {};
-
-(function(root) { 'use strict';
-
+module.exports = function(){
 	var supports = {}; // object of supported file types
 	var pending = 0; // pending file types to process
 	var canPlayThrough = function (src) { // check whether format plays through
@@ -37,7 +34,7 @@ if (typeof MIDI === 'undefined') MIDI = {};
 		body.appendChild(audio);
 	};
 
-	root.audioDetect = function(onsuccess) {
+	var audioDetect = function(onsuccess) {
 		/// detect jazz-midi plugin
 		if (navigator.requestMIDIAccess) {
 			var isNative = Function.prototype.toString.call(navigator.requestMIDIAccess).indexOf('[native code]');
@@ -87,7 +84,7 @@ if (typeof MIDI === 'undefined') MIDI = {};
 		if (mpeg) canPlayThrough('audio/mpeg;base64,/+MYxAAAAANIAUAAAASEEB/jwOFM/0MM/90b/+RhST//w4NFwOjf///PZu////9lns5GFDv//l9GlUIEEIAAAgIg8Ir/JGq3/+MYxDsLIj5QMYcoAP0dv9HIjUcH//yYSg+CIbkGP//8w0bLVjUP///3Z0x5QCAv/yLjwtGKTEFNRTMuOTeqqqqqqqqqqqqq/+MYxEkNmdJkUYc4AKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq');
 
 		/// lets find out!
-		var time = (new Date()).getTime(); 
+		var time = (new Date()).getTime();
 		var interval = window.setInterval(function() {
 			var now = (new Date()).getTime();
 			var maxExecution = now - time > 5000;
@@ -97,5 +94,5 @@ if (typeof MIDI === 'undefined') MIDI = {};
 			}
 		}, 1);
 	};
-
-})(MIDI);
+	return audioDetect;
+};

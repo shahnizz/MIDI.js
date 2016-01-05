@@ -7,10 +7,27 @@
     "type": "git",
     "url": "git://github.com/musescore/MIDI.js.git"
   },
-  "main": "./build/MIDI.min.js",
+  "main": "./js/main.js",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/musescore/MIDI.js/issues"
   },
-  "homepage": "https://github.com/musescore/MIDI.js#readme"
+  "homepage": "https://github.com/musescore/MIDI.js#readme",
+  "dependencies": {
+    "tunajs": "^0.4.2"
+  },
+  "devDependencies": {
+    "browserify": "^12.0.1",
+    "gulp": "^3.9.0",
+    "gulp-header": "^1.7.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-uglify": "^1.5.1",
+    "partition-bundle": "^2.2.1",
+    "strictify": "latest",
+    "uglify-js": "latest",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.6.1"
+  }
 }

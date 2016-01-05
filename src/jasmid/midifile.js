@@ -2,7 +2,9 @@
 class to parse the .mid file format
 (depends on stream.js)
 */
-function MidiFile(data) {
+module.exports = function (data) {
+	var Stream = require('./stream');
+	var ticksPerBeat;
 	function readChunk(stream) {
 		var id = stream.read(4);
 		var length = stream.readInt32();
@@ -195,7 +197,7 @@ function MidiFile(data) {
 		}
 	}
 	
-	stream = Stream(data);
+	var stream = Stream(data);
 	var headerChunk = readChunk(stream);
 	if (headerChunk.id != 'MThd' || headerChunk.length != 6) {
 		throw "Bad .mid file - header not found";
@@ -215,7 +217,8 @@ function MidiFile(data) {
 		'formatType': formatType,
 		'trackCount': trackCount,
 		'ticksPerBeat': ticksPerBeat
-	}
+	};
+
 	var tracks = [];
 	for (var i = 0; i < header.trackCount; i++) {
 		tracks[i] = [];
@@ -227,7 +230,6 @@ function MidiFile(data) {
 		while (!trackStream.eof()) {
 			var event = readEvent(trackStream);
 			tracks[i].push(event);
-			//console.log(event);
 		}
 	}
 	
@@ -235,4 +237,4 @@ function MidiFile(data) {
 		'header': header,
 		'tracks': tracks
 	}
-}
+};

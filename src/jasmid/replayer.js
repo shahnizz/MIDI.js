@@ -6,7 +6,7 @@ var clone = function (o) {
 	return ret;
 };
 
-function Replayer(midiFile, timeWarp, eventProcessor, bpm) {
+module.exports = function (midiFile, timeWarp, eventProcessor, bpm) {
 	var trackStates = [];
 	var beatsPerMinute = bpm ? bpm : 120;
 	var bpmOverride = bpm ? true : false;
@@ -65,7 +65,7 @@ function Replayer(midiFile, timeWarp, eventProcessor, bpm) {
 		} else {
 			return null;
 		}
-	};
+	}
 	//
 	var midiEvent;
 	var temporal = [];
@@ -92,8 +92,9 @@ function Replayer(midiFile, timeWarp, eventProcessor, bpm) {
 		if (midiEvent = getNextEvent()) {
 			while(midiEvent) processNext(true);
 		}
-	};
+	}
 	processEvents();
+
 	return {
 		"getData": function() {
 			return clone(temporal);
