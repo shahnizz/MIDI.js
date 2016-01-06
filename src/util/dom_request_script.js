@@ -221,5 +221,5 @@ var globalExists = function(path, root) {
 
 /// For NodeJS
 if (typeof (module) !== "undefined" && module.exports) {
-	module.exports = dom.loadScript;
+	module.exports = dom;
 }

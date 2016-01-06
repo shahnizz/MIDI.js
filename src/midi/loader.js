@@ -17,12 +17,36 @@
 
 
 module.exports = function() {
+    window.MIDI = {};
+    window.MIDI.Soundfont = {};
     'use strict';
+    var audioDetect = require('./audioDetect');
+    var generalMIDI = require('./gm');
+    var webMidi = require('./plugin.webmidi');
+    var audiotag = require('./plugin.audiotag');
+    var webaudio = require('./plugin.webaudio');
+    var request = require('../util/dom_request_xhr');
+    var dom = require('../util/dom_request_script');
+
     var root = {};
     root.DEBUG = true;
     root.USE_XHR = true;
     root.soundfontUrl = './soundfont/';
-
+    root.player;
+    root.channels = (function () { // 0 - 15 channels
+        var channels = {};
+        for (var i = 0; i < 16; i++) {
+            channels[i] = { // default values
+                instrument: i,
+                pitchBend: 0,
+                mute: false,
+                mono: false,
+                omni: false,
+                solo: false
+            };
+        }
+        return channels;
+    })();
     /*
      MIDI.loadPlugin({
      onsuccess: function() { },
@@ -41,10 +65,9 @@ module.exports = function() {
         root.soundfontUrl = opts.soundfontUrl || root.soundfontUrl;
 
         /// Detect the best type of audio to use
-        root.audioDetect(function (supports) {
+        audioDetect(function (supports) {
             var hash = window.location.hash;
             var api = '';
-
             /// use the most appropriate plugin if not specified
             if (supports[opts.api]) {
                 api = opts.api;
@@ -58,20 +81,18 @@ module.exports = function() {
                 api = 'audiotag';
             }
 
-            if (connect[api]) {
-                /// use audio/ogg when supported
-                if (opts.targetFormat) {
-                    var audioFormat = opts.targetFormat;
-                } else { // use best quality
-                    var audioFormat = supports['audio/ogg'] ? 'ogg' : 'mp3';
-                }
-
-                /// load the specified plugin
-                root.__api = api;
-                root.__audioFormat = audioFormat;
-                root.supports = supports;
-                root.loadResource(opts);
+            /// use audio/ogg when supported
+            if (opts.targetFormat) {
+                var audioFormat = opts.targetFormat;
+            } else { // use best quality
+                var audioFormat = supports['audio/ogg'] ? 'ogg' : 'mp3';
             }
+
+            /// load the specified plugin
+            root.__api = api;
+            root.__audioFormat = audioFormat;
+            root.supports = supports;
+            root.loadResource(opts);
         });
     };
 
@@ -97,32 +118,43 @@ module.exports = function() {
         for (var i = 0; i < instruments.length; i++) {
             var instrument = instruments[i];
             if (instrument === +instrument) { // is numeric
-                if (root.GM.byId[instrument]) {
-                    instruments[i] = root.GM.byId[instrument].id;
+                if (generalMIDI.GM.byId[instrument]) {
+                    instruments[i] = generalMIDI.GM.byId[instrument].id;
                 }
             }
         }
         ///
         opts.format = root.__audioFormat;
         opts.instruments = instruments;
+
         ///
-        connect[root.__api](opts);
+        root.midi = connect(root.__api, opts);
     };
 
-    var connect = {
-        webmidi: function (opts) {
-            // cant wait for this to be standardized!
-            root.WebMIDI.connect(opts);
-        },
-        audiotag: function (opts) {
-            // works ok, kinda like a drunken tuna fish, across the board
-            // http://caniuse.com/audio
-            requestQueue(opts, 'AudioTag');
-        },
-        webaudio: function (opts) {
-            // works awesome! safari, chrome and firefox support
-            // http://caniuse.com/web-audio
-            requestQueue(opts, 'WebAudio');
+    var connect = function(api, opts){
+        if (window.AudioContext) { // Chrome
+            api = 'webaudio';
+        } else if (window.Audio) { // Firefox
+            api = 'audiotag';
+        } else { // no support
+            //return;
+        }
+
+        switch(api) {
+            case 'webmidi':
+                // cant wait for this to be standardized!
+                root.player = webMidi.connect(opts);
+                break;
+            case 'audiotag':
+                // works ok, kinda like a drunken tuna fish, across the board
+                // http://caniuse.com/audio
+                requestQueue(opts, audiotag);
+                break;
+            case 'webaudio':
+                // works awesome! safari, chrome and firefox support
+                // http://caniuse.com/web-audio
+                requestQueue(opts, webaudio);
+                break;
         }
     };
 
@@ -137,13 +169,13 @@ module.exports = function() {
         var waitForEnd = function () {
             if (!--pending) {
                 onprogress && onprogress('load', 1.0);
-                root[context].connect(opts);
+                root.player = context.connect(opts, root.channels);
             }
         };
         ///
         for (var i = 0; i < length; i++) {
             var instrumentId = instruments[i];
-            if (MIDI.Soundfont[instrumentId]) { // already loaded
+            if (window.MIDI.Soundfont[instrumentId]) { // already loaded
                 waitForEnd();
             } else { // needs to be requested
                 sendRequest(instruments[i], audioFormat, function (evt, progress) {
@@ -154,14 +186,14 @@ module.exports = function() {
                     waitForEnd();
                 }, onerror);
             }
-        }
-        ;
+        };
     };
 
     var sendRequest = function (instrumentId, audioFormat, onprogress, onsuccess, onerror) {
         var soundfontPath = root.soundfontUrl + instrumentId + '-' + audioFormat + '.js';
+
         if (root.USE_XHR) {
-            root.util.request({
+            request({
                 url: soundfontPath,
                 format: 'text',
                 onerror: onerror,
@@ -172,6 +204,7 @@ module.exports = function() {
                     script.type = 'text/javascript';
                     script.text = responseText;
                     document.body.appendChild(script);
+
                     ///
                     onsuccess();
                 }

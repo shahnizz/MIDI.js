@@ -6,7 +6,7 @@
  ----------------------------------------------------------
  */
 module.exports = function () {
-    var GeneralMIDI = require('./gm');
+    var generalMIDI = require('./gm');
     'use strict';
     var midi = {};
 
@@ -170,7 +170,7 @@ module.exports = function () {
                     break;
                 case 'noteOn':
                     var program = programs[channel];
-                    var gm = GeneralMIDI.GM.byId[isFinite(program) ? program : channel];
+                    var gm = generalMIDI.GM.byId[isFinite(program) ? program : channel];
                     instruments[gm.id] = true;
                     break;
             }

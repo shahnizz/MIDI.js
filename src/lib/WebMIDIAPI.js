@@ -364,6 +364,7 @@
     if (!window.navigator.requestMIDIAccess)
         window.navigator.requestMIDIAccess = _requestMIDIAccess;
 
+    module.exports = _requestMIDIAccess;
 }(window));
 
 // Polyfill window.performance.now() if necessary.
