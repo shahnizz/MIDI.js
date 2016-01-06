@@ -6,10 +6,9 @@
  ----------------------------------------------------------------------
  */
 'use strict';
-var requestMIDIAccess = require('../lib/WebMIDIAPI');
+require('../../node_modules/web-midi-api/WebMIDIAPI.min.js');
 var plugin = null;
 var output = null;
-var channels = [];
 var midi = {api: 'webmidi'};
 midi.send = function (data, delay) { // set channel volume
     output.send(data, delay * 1000);
@@ -27,8 +26,8 @@ midi.programChange = function (channel, program, delay) { // change patch (instr
     output.send([0xC0 + channel, program], delay * 1000);
 };
 
-midi.pitchBend = function (channel, program, delay) { // pitch bend
-    output.send([0xE0 + channel, program], delay * 1000);
+midi.pitchBend = function(channel, program, delay) { // pitch bend
+    output.send([0xE0 + channel, program & 0x7F, program >> 7], delay * 1000);
 };
 
 midi.noteOn = function (channel, note, velocity, delay) {
@@ -61,34 +60,16 @@ midi.stopAllNotes = function () {
 };
 
 midi.connect = function (opts) {
-    //root.setDefaultPlugin(midi);
-    var errFunction = function (err) { // well at least we tried!
-        /*
-        if (window.AudioContext) { // Chrome
-            opts.api = 'webaudio';
-        } else if (window.Audio) { // Firefox
-            opts.api = 'audiotag';
-        } else { // no support
-            return;
-        }
-        root.loadPlugin(opts);
-        */
-    };
-    ///
-    requestMIDIAccess().then(function (access) {
+    window.navigator.requestMIDIAccess().then(function (access) {
         plugin = access;
         var pluginOutputs = plugin.outputs;
-        if (typeof pluginOutputs == 'function') { // Chrome pre-43
-            output = pluginOutputs()[0];
-        } else { // Chrome post-43
-            output = pluginOutputs[0];
-        }
-        if (output === undefined) { // nothing there...
-            errFunction();
-        } else {
+        if (typeof pluginOutputs == 'function') pluginOutputs = pluginOutputs();  // Chrome pre-43
+        if (pluginOutputs.size > 0) {
+            output = pluginOutputs.values().next().value;
             opts.onsuccess && opts.onsuccess();
         }
-    }, errFunction);
+    });
+    return this;
 };
 
 module.exports = midi;

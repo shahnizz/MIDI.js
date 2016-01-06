@@ -22,6 +22,9 @@ module.exports = function() {
     'use strict';
     var audioDetect = require('./audioDetect');
     var generalMIDI = require('./gm');
+    var _ = {
+        merge : require('lodash.merge')
+    };
     var webMidi = require('./plugin.webmidi');
     var audiotag = require('./plugin.audiotag');
     var webaudio = require('./plugin.webaudio');
@@ -32,7 +35,6 @@ module.exports = function() {
     root.DEBUG = true;
     root.USE_XHR = true;
     root.soundfontUrl = './soundfont/';
-    root.player;
     root.channels = (function () { // 0 - 15 channels
         var channels = {};
         for (var i = 0; i < 16; i++) {
@@ -126,24 +128,15 @@ module.exports = function() {
         ///
         opts.format = root.__audioFormat;
         opts.instruments = instruments;
-
         ///
         root.midi = connect(root.__api, opts);
     };
 
     var connect = function(api, opts){
-        if (window.AudioContext) { // Chrome
-            api = 'webaudio';
-        } else if (window.Audio) { // Firefox
-            api = 'audiotag';
-        } else { // no support
-            //return;
-        }
-
         switch(api) {
             case 'webmidi':
                 // cant wait for this to be standardized!
-                root.player = webMidi.connect(opts);
+                root = _.merge(root, webMidi.connect(opts, root.channels));
                 break;
             case 'audiotag':
                 // works ok, kinda like a drunken tuna fish, across the board
@@ -156,6 +149,7 @@ module.exports = function() {
                 requestQueue(opts, webaudio);
                 break;
         }
+        root.__api = api;
     };
 
     var requestQueue = function (opts, context) {
@@ -169,7 +163,7 @@ module.exports = function() {
         var waitForEnd = function () {
             if (!--pending) {
                 onprogress && onprogress('load', 1.0);
-                root.player = context.connect(opts, root.channels);
+                root =_.merge(root, context.connect(opts, root.channels));
             }
         };
         ///

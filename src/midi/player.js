@@ -275,7 +275,9 @@ module.exports = function () {
         var interval = eventQueue[0] && eventQueue[0].interval || 0;
         var foffset = currentTime - midi.currentTime;
         ///
-        if (MIDI.api !== 'webaudio') { // set currentTime on ctx
+        if (MIDI.api === 'webmidi') {
+            ctx.currentTime = getNow() / 1000;
+        } else if (MIDI.api !== 'webaudio') { // set currentTime on ctx
             var now = getNow();
             __now = __now || now;
             ctx.currentTime = (now - __now) / 1000;
