@@ -80,10 +80,13 @@ module.exports = function() {
             /*
             else if (supports.webmidi) {
                 api = 'webmidi';
-            }*/
+            }
+             */
             else if (window.AudioContext) { // Chrome
                 api = 'webaudio';
-            } else if (window.Audio) { // Firefox
+
+            }
+             else if (window.Audio) { // Firefox
                 api = 'audiotag';
             }
 

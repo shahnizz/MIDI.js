@@ -1,5 +1,5 @@
 {
-  "name": "MIDI.js",
+  "name": "midiJS",
   "version": "0.3.0",
   "description": "A commonJS fork of mudcube's midiJS",
   "author": "Musescore",
