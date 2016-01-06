@@ -6,7 +6,7 @@
  ----------------------------------------------------------------------
  */
 'use strict';
-require('../../node_modules/web-midi-api/WebMIDIAPI.min.js');
+require('web-midi-api/WebMIDIAPI.min.js');
 var plugin = null;
 var output = null;
 var midi = {api: 'webmidi'};
