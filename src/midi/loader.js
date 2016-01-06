@@ -32,6 +32,7 @@ module.exports = function() {
     var dom = require('../util/dom_request_script');
 
     var root = {};
+    root.Player = require('./player')(root);
     root.DEBUG = true;
     root.USE_XHR = true;
     root.soundfontUrl = './soundfont/';
@@ -75,9 +76,12 @@ module.exports = function() {
                 api = opts.api;
             } else if (supports[hash.substr(1)]) {
                 api = hash.substr(1);
-            } else if (supports.webmidi) {
+            }
+            /*
+            else if (supports.webmidi) {
                 api = 'webmidi';
-            } else if (window.AudioContext) { // Chrome
+            }*/
+            else if (window.AudioContext) { // Chrome
                 api = 'webaudio';
             } else if (window.Audio) { // Firefox
                 api = 'audiotag';

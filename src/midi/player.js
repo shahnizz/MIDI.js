@@ -5,8 +5,10 @@
  https://github.com/mudcube/MIDI.js
  ----------------------------------------------------------
  */
-module.exports = function () {
+module.exports = function (MIDI) {
     var generalMIDI = require('./gm');
+    var Replayer = require('../jasmid/replayer');
+    var MidiFile = require('../jasmid/midifile');
     'use strict';
     var midi = {};
 
@@ -103,20 +105,16 @@ module.exports = function () {
     };
     // helpers
     midi.loadMidiFile = function (onsuccess, onprogress, onerror) {
-        try {
-            midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null, midi.BPM);
-            midi.data = midi.replayer.getData();
-            midi.endTime = getLength();
-            ///
-            MIDI.loadPlugin({
-// 			instruments: midi.getFileInstruments(),
-                onsuccess: onsuccess,
-                onprogress: onprogress,
-                onerror: onerror
-            });
-        } catch (event) {
-            onerror && onerror(event);
-        }
+        midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null, midi.BPM);
+        midi.data = midi.replayer.getData();
+        midi.endTime = getLength();
+        ///
+        MIDI.loadPlugin({
+			instruments: midi.getFileInstruments(),
+            onsuccess: onsuccess,
+            onprogress: onprogress,
+            onerror: onerror
+        });
     };
 
     midi.loadFile = function (file, onsuccess, onprogress, onerror) {
@@ -222,7 +220,7 @@ module.exports = function () {
 
     var getContext = function () {
         if (MIDI.api === 'webaudio') {
-            return MIDI.WebAudio.getContext();
+            return MIDI.getContext();
         } else {
             midi.ctx = {currentTime: 0};
         }
