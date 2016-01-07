@@ -29,9 +29,12 @@ module.exports = function() {
     var audiotag = require('./plugin.audiotag');
     var webaudio = require('./plugin.webaudio');
     var request = require('../util/dom_request_xhr');
+    var dom = require('../util/dom_request_script');
+
     var root = {};
     root.Player = require('./player')(root);
     root.DEBUG = true;
+    root.USE_XHR = true;
     root.soundfontUrl = './soundfont/';
     root.channels = (function () { // 0 - 15 channels
         var channels = {};
@@ -60,6 +63,21 @@ module.exports = function() {
     root.loadPlugin = function (opts) {
         if (typeof opts === 'function') {
             opts = {onsuccess: opts};
+        }
+
+        if(typeof opts.channels !== 'undefined'){
+            var channels = [];
+            for (var i = 0; i < opts.channels.length ; i++){
+                channels[i] = { // default values
+                    instrument: opts.channels[i],
+                    pitchBend: 0,
+                    mute: false,
+                    mono: false,
+                    omni: false,
+                    solo: false
+                };
+            }
+            root.channels = channels;
         }
 
         root.soundfontUrl = opts.soundfontUrl || root.soundfontUrl;

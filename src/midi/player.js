@@ -106,13 +106,6 @@ module.exports = function (MIDI) {
         midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null);
         midi.data = midi.replayer.getData();
         midi.endTime = getLength();
-        ///
-        MIDI.loadPlugin({
-			instruments: midi.getFileInstruments(),
-            onsuccess: onsuccess,
-            onprogress: onprogress,
-            onerror: onerror
-        });
     };
 
     midi.loadFile = function (file, onsuccess, onprogress, onerror) {
@@ -282,6 +275,7 @@ module.exports = function (MIDI) {
         ///
         startTime = ctx.currentTime;
         ///
+
         for (var n = 0; n < length && messages < 100; n++) {
             var obj = data[n];
             if ((queuedTime += obj[1]) <= currentTime) {
@@ -297,14 +291,17 @@ module.exports = function (MIDI) {
             }
             ///
             var channelId = event.channel;
+
             var channel = MIDI.channels[channelId];
             var delay = ctx.currentTime + ((currentTime + foffset + midi.startDelay) / 1000);
             var queueTime = queuedTime - offset + midi.startDelay;
             switch (event.subtype) {
+
                 case 'controller':
                     MIDI.setController(channelId, event.controllerType, event.value, delay);
                     break;
                 case 'programChange':
+
                     MIDI.programChange(channelId, event.programNumber, delay);
                     break;
                 case 'pitchBend':
