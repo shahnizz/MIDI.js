@@ -18,8 +18,6 @@ module.exports = function (MIDI) {
     midi.playing = false;
     midi.timeWarp = 1;
     midi.startDelay = 0;
-    midi.BPM = 120;
-
     midi.start =
         midi.resume = function (onsuccess) {
             if (midi.currentTime < -1) {
@@ -105,7 +103,7 @@ module.exports = function (MIDI) {
     };
     // helpers
     midi.loadMidiFile = function (onsuccess, onprogress, onerror) {
-        midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null, midi.BPM);
+        midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null);
         midi.data = midi.replayer.getData();
         midi.endTime = getLength();
         ///
