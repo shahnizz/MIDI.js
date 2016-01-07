@@ -18,7 +18,6 @@ gulp.task('browserify', function () {
 function build() {
     var b = browserify();
     b.plugin('partition-bundle', {
-        map: 'mapping.json',
         output : 'dist',
         main: './src/main',
         url: './dist'

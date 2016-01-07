@@ -245,6 +245,7 @@ module.exports = function (MIDI) {
     };
 
     var startAudio = function (currentTime, fromCache, onsuccess) {
+
         if (!midi.replayer) {
             return;
         }

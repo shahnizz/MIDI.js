@@ -1,0 +1,1 @@
+loadjs(["./src/main"]);

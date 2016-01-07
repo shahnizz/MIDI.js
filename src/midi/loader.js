@@ -29,12 +29,9 @@ module.exports = function() {
     var audiotag = require('./plugin.audiotag');
     var webaudio = require('./plugin.webaudio');
     var request = require('../util/dom_request_xhr');
-    var dom = require('../util/dom_request_script');
-
     var root = {};
     root.Player = require('./player')(root);
     root.DEBUG = true;
-    root.USE_XHR = true;
     root.soundfontUrl = './soundfont/';
     root.channels = (function () { // 0 - 15 channels
         var channels = {};
@@ -78,15 +75,15 @@ module.exports = function() {
                 api = hash.substr(1);
             }
             /*
-            else if (supports.webmidi) {
-                api = 'webmidi';
-            }
+             else if (supports.webmidi) {
+             api = 'webmidi';
+             }
              */
             else if (window.AudioContext) { // Chrome
                 api = 'webaudio';
 
             }
-             else if (window.Audio) { // Firefox
+            else if (window.Audio) { // Firefox
                 api = 'audiotag';
             }
 
@@ -192,34 +189,22 @@ module.exports = function() {
 
     var sendRequest = function (instrumentId, audioFormat, onprogress, onsuccess, onerror) {
         var soundfontPath = root.soundfontUrl + instrumentId + '-' + audioFormat + '.js';
+        request({
+            url: soundfontPath,
+            format: 'text',
+            onerror: onerror,
+            onprogress: onprogress,
+            onsuccess: function (event, responseText) {
+                var script = document.createElement('script');
+                script.language = 'javascript';
+                script.type = 'text/javascript';
+                script.text = responseText;
+                document.body.appendChild(script);
 
-        if (root.USE_XHR) {
-            request({
-                url: soundfontPath,
-                format: 'text',
-                onerror: onerror,
-                onprogress: onprogress,
-                onsuccess: function (event, responseText) {
-                    var script = document.createElement('script');
-                    script.language = 'javascript';
-                    script.type = 'text/javascript';
-                    script.text = responseText;
-                    document.body.appendChild(script);
-
-                    ///
-                    onsuccess();
-                }
-            });
-        } else {
-            dom.loadScript.add({
-                url: soundfontPath,
-                verify: 'MIDI.Soundfont["' + instrumentId + '"]',
-                onerror: onerror,
-                onsuccess: function () {
-                    onsuccess();
-                }
-            });
-        }
+                ///
+                onsuccess();
+            }
+        });
     };
 
     root.setDefaultPlugin = function (midi) {
