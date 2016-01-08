@@ -374,6 +374,7 @@ module.exports = function (MIDI) {
             for(var i = 0; i < eventQueue.length; i++){
                 var event = eventQueue[i];
                 if (event && event.source && typeof event.source.setChannelVolume === 'function' && event.source.channel === channel){
+                    console.log('test3');
                     event.source.setChannelVolume(val);
                 }
             }

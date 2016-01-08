@@ -112,6 +112,7 @@ midi.noteOn = function (channelId, noteId, velocity, delay) {
         source.gainNode.gain.cancelScheduledValues(ctx.currentTime);
         source.gainNode.gain.value = getGainValue(velocity, vol, masterVolume);
     };
+    source.channel = channelId;
     source.connect(source.gainNode);
     ///
     if (useStreamingBuffer) {
