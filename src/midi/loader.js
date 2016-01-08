@@ -74,7 +74,8 @@ module.exports = function() {
                     mute: false,
                     mono: false,
                     omni: false,
-                    solo: false
+                    solo: false,
+                    volume: 1
                 };
             }
             root.channels = channels;

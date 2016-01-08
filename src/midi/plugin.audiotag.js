@@ -37,7 +37,7 @@ var playChannel = function (channel, note) {
             return;
         }
         audio.src = window.MIDI.Soundfont[instrumentId][note.id];
-        audio.volume = volume / 127;
+        audio.volume = (volume * channels[channel].volume) / 127;
         audio.play();
         buffer_nid = nid;
     }
