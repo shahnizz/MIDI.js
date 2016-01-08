@@ -45,7 +45,8 @@ module.exports = function() {
                 mute: false,
                 mono: false,
                 omni: false,
-                solo: false
+                solo: false,
+                volume: 1
             };
         }
         return channels;
@@ -67,15 +68,7 @@ module.exports = function() {
 
         if(typeof opts.channels !== 'undefined'){
             for (var i = 0; i < opts.channels.length ; i++){
-                root.channels [i] = { // default values
-                    instrument: opts.channels[i],
-                    pitchBend: 0,
-                    mute: false,
-                    mono: false,
-                    omni: false,
-                    solo: false,
-                    volume: 1
-                };
+                root.channels[i].instrument = opts.channels[i]
             }
         }
 

@@ -259,7 +259,7 @@ module.exports = function (MIDI) {
         var ctx = getContext();
         var length = data.length;
         //
-        queuedTime = 0.5;
+        queuedTime = 0;
         ///
         var interval = eventQueue[0] && eventQueue[0].interval || 0;
         var foffset = currentTime - midi.currentTime;
@@ -274,15 +274,12 @@ module.exports = function (MIDI) {
         ///
         startTime = ctx.currentTime;
         ///
-
         for (var n = 0; n < length && messages < 100; n++) {
             var obj = data[n];
-
-            if ((queuedTime += obj[1]) <= currentTime) {
+            if ((queuedTime += obj[1]) < currentTime) {
                 offset = queuedTime;
                 continue;
             }
-
             ///
             currentTime = queuedTime - offset;
             ///
@@ -374,7 +371,6 @@ module.exports = function (MIDI) {
             for(var i = 0; i < eventQueue.length; i++){
                 var event = eventQueue[i];
                 if (event && event.source && typeof event.source.setChannelVolume === 'function' && event.source.channel === channel){
-                    console.log('test3');
                     event.source.setChannelVolume(val);
                 }
             }
