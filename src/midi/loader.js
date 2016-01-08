@@ -66,9 +66,8 @@ module.exports = function() {
         }
 
         if(typeof opts.channels !== 'undefined'){
-            var channels = [];
             for (var i = 0; i < opts.channels.length ; i++){
-                channels[i] = { // default values
+                root.channels [i] = { // default values
                     instrument: opts.channels[i],
                     pitchBend: 0,
                     mute: false,
@@ -78,7 +77,6 @@ module.exports = function() {
                     volume: 1
                 };
             }
-            root.channels = channels;
         }
 
         root.soundfontUrl = opts.soundfontUrl || root.soundfontUrl;
