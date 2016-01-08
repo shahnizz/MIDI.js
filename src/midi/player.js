@@ -371,8 +371,8 @@ module.exports = function (MIDI) {
     midi.setChannelVolume = function(val, channel){
         MIDI.channels[channel].volume = val;
         if(MIDI.api === "webaudio"){
-            for(var i = 0; i < MIDI.Player.eventQueue.length; i++){
-                var event = MIDI.Player.eventQueue[i];
+            for(var i = 0; i < eventQueue.length; i++){
+                var event = eventQueue[i];
                 if (event && event.source && typeof event.source.setChannelVolume === 'function' && event.source.channel === channel){
                     event.source.setChannelVolume(val);
                 }
