@@ -99,9 +99,6 @@ midi.noteOn = function (channelId, noteId, velocity, delay) {
     }
 
     /// add gain + pitchShift
-    var gain = (velocity / 127) * (masterVolume / 127) * 2 - 1;
-
-
     source.connect(ctx.destination);
     source.playbackRate.value = 1; // pitch shift
     source.gainNode = ctx.createGain(); // gain
@@ -109,12 +106,12 @@ midi.noteOn = function (channelId, noteId, velocity, delay) {
     function getGainValue(vol, channelVol, masterVol) {
         return Math.max(-1, (vol * channelVol / 127) * (masterVol / 127) * 2 - 1);
     }
-    source.gainNode.gain.value = getGainValue(velocity, channels[channel].volume, masterVolume);
+
+    source.gainNode.gain.value = getGainValue(velocity, channel.volume, masterVolume);
     source.setChannelVolume = function (vol) {
         source.gainNode.gain.cancelScheduledValues(ctx.currentTime);
         source.gainNode.gain.value = getGainValue(velocity, vol, masterVolume);
     };
-    source.channel = channel;
     source.connect(source.gainNode);
     ///
     if (useStreamingBuffer) {
