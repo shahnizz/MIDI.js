@@ -4022,7 +4022,6 @@ module.exports = toPlainObject;
 (function (global){
 !function e(t,n,i){function s(a,r){if(!n[a]){if(!t[a]){var c="function"==typeof require&&require;if(!r&&c)return c(a,!0);if(o)return o(a,!0);var u=new Error("Cannot find module '"+a+"'");throw u.code="MODULE_NOT_FOUND",u}var f=n[a]={exports:{}};t[a][0].call(f.exports,function(e){var n=t[a][1][e];return s(n?n:e)},f,f.exports,e,t,n,i)}return n[a].exports}for(var o="function"==typeof require&&require,a=0;a<i.length;a++)s(i[a]);return s}({1:[function(e,t,n){function i(){f=!1,r.length?u=r.concat(u):l=-1,u.length&&s()}function s(){if(!f){var e=setTimeout(i);f=!0;for(var t=u.length;t;){for(r=u,u=[];++l<t;)r&&r[l].run();l=-1,t=u.length}r=null,f=!1,clearTimeout(e)}}function o(e,t){this.fun=e,this.array=t}function a(){}var r,c=t.exports={},u=[],f=!1,l=-1;c.nextTick=function(e){var t=new Array(arguments.length-1);if(arguments.length>1)for(var n=1;n<arguments.length;n++)t[n-1]=arguments[n];u.push(new o(e,t)),1!==u.length||f||setTimeout(s,0)},o.prototype.run=function(){this.fun.apply(null,this.array)},c.title="browser",c.browser=!0,c.env={},c.argv=[],c.version="",c.versions={},c.on=a,c.addListener=a,c.once=a,c.off=a,c.removeListener=a,c.removeAllListeners=a,c.emit=a,c.binding=function(e){throw new Error("process.binding is not supported")},c.cwd=function(){return"/"},c.chdir=function(e){throw new Error("process.chdir is not supported")},c.umask=function(){return 0}},{}],2:[function(e,t,n){"use strict";function i(e){var t="jazz_"+r++ +Date.now(),n=void 0,i=void 0,s=void 0;if(o.getDevice().nodejs===!0)i=new jazzMidi.MIDI;else{var u=document.createElement("object");u.id=t+"ie",u.classid="CLSID:1ACE1618-1C7D-4561-AEE1-34842AA85E90",s=u;var f=document.createElement("object");f.id=t,f.type="audio/x-jazz",u.appendChild(f),i=f;var l=document.createElement("p");l.appendChild(document.createTextNode("This page requires the "));var d=document.createElement("a");d.appendChild(document.createTextNode("Jazz plugin")),d.href="http://jazz-soft.net/",l.appendChild(d),l.appendChild(document.createTextNode(".")),f.appendChild(l);var h=document.getElementById("MIDIPlugin");h||(h=document.createElement("div"),h.id="MIDIPlugin",h.style.position="absolute",h.style.visibility="hidden",h.style.left="-9999px",h.style.top="-9999px",document.body.appendChild(h)),h.appendChild(u)}setTimeout(function(){i.isJazz===!0?n=i:s.isJazz===!0&&(n=s),void 0!==n&&(n._perfTimeZero=performance.now(),c.set(t,n)),e(n)},a)}function s(e,t){var n=null,s="input"===e?"inputInUse":"outputInUse",o=!0,a=!1,r=void 0;try{for(var u,f=c.values()[Symbol.iterator]();!(o=(u=f.next()).done);o=!0){var l=u.value;if(l[s]!==!0){n=l;break}}}catch(d){a=!0,r=d}finally{try{!o&&f["return"]&&f["return"]()}finally{if(a)throw r}}null===n?i(t):t(n)}Object.defineProperty(n,"__esModule",{value:!0}),n.createJazzInstance=i,n.getJazzInstance=s;var o=e("./util"),a=100,r=0,c=new Map},{"./util":9}],3:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}function s(){return new Promise(function(e,t){return void 0!==I?void e(I):"ie9"===y.getDevice().browser?void t({message:"WebMIDIAPIShim supports Internet Explorer 10 and above."}):void v.createJazzInstance(function(n){return void 0===n?void t({message:"No access to MIDI devices: browser does not support the WebMIDI API and the Jazz plugin is not installed."}):(_=n,void o(function(){u(),I=new D(w,b),e(I)}))})})}function o(e){var t=_.MidiInList(),n=_.MidiOutList(),i=t.length,s=n.length;a(0,i,"input",t,function(){a(0,s,"output",n,e)})}function a(e,t,n,i,s){if(t>e){var o=i[e++];r(n,o,function(){a(e,t,n,i,s)})}else s()}function r(e,t,n){v.getJazzInstance(e,function(i){var s=void 0,o=[t,"",""];"input"===e?(i.Support("MidiInInfo")&&(o=i.MidiInInfo(t)),s=new p.MIDIInput(o,i),w.set(s.id,s)):"output"===e&&(i.Support("MidiOutInfo")&&(o=i.MidiOutInfo(t)),s=new m.MIDIOutput(o,i),b.set(s.id,s)),n(s)})}function c(e,t){var n=void 0,i=!0,s=!1,o=void 0;try{for(var a,r=e.values()[Symbol.iterator]();!(i=(a=r.next()).done)&&(n=a.value,n.name!==t);i=!0);}catch(c){s=!0,o=c}finally{try{!i&&r["return"]&&r["return"]()}finally{if(s)throw o}}return n}function u(){_.OnDisconnectMidiIn(function(e){var t=c(w,e);void 0!==t&&(t.state="disconnected",t.close(),t._jazzInstance.inputInUse=!1,w["delete"](t.id),f(t))}),_.OnDisconnectMidiOut(function(e){var t=c(b,e);void 0!==t&&(t.state="disconnected",t.close(),t._jazzInstance.outputInUse=!1,b["delete"](t.id),f(t))}),_.OnConnectMidiIn(function(e){r("input",e,function(e){f(e)})}),_.OnConnectMidiOut(function(e){r("output",e,function(e){f(e)})})}function f(e){e.dispatchEvent(new g.MIDIConnectionEvent(e,e));var t=new g.MIDIConnectionEvent(I,e);"function"==typeof I.onstatechange&&I.onstatechange(t);var n=!0,i=!1,s=void 0;try{for(var o,a=z[Symbol.iterator]();!(n=(o=a.next()).done);n=!0){var r=o.value;r(t)}}catch(c){i=!0,s=c}finally{try{!n&&a["return"]&&a["return"]()}finally{if(i)throw s}}}function l(){w.forEach(function(e){e._jazzInstance.MidiInClose()})}function d(e,t){var n=void 0;return"input"===t?(n=M.get(e),void 0===n&&(n=y.generateUUID(),M.set(e,n))):"output"===t&&(n=x.get(e),void 0===n&&(n=y.generateUUID(),x.set(e,n))),n}Object.defineProperty(n,"__esModule",{value:!0});var h=function(){function e(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(t,n,i){return n&&e(t.prototype,n),i&&e(t,i),t}}();n.createMIDIAccess=s,n.dispatchEvent=f,n.closeAllMIDIInputs=l,n.getMIDIDeviceId=d;var v=e("./jazz_instance"),p=e("./midi_input"),m=e("./midi_output"),g=e("./midiconnection_event"),y=e("./util"),I=void 0,_=void 0,w=new Map,b=new Map,M=new Map,x=new Map,z=new Set,D=function(){function e(t,n){i(this,e),this.sysexEnabled=!0,this.inputs=t,this.outputs=n}return h(e,[{key:"addEventListener",value:function(e,t,n){"statechange"===e&&z.has(t)===!1&&z.add(t)}},{key:"removeEventListener",value:function(e,t,n){"statechange"===e&&z.has(t)===!0&&z["delete"](t)}}]),e}()},{"./jazz_instance":2,"./midi_input":4,"./midi_output":5,"./midiconnection_event":6,"./util":9}],4:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function(){function e(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(t,n,i){return n&&e(t.prototype,n),i&&e(t,i),t}}(),o=e("./util"),a=e("./midimessage_event"),r=(e("./midiconnection_event"),e("./midi_access")),c=void 0,u=o.getDevice().nodejs,f=function(){function e(t,n){i(this,e),this.id=r.getMIDIDeviceId(t[0],"input"),this.name=t[0],this.manufacturer=t[1],this.version=t[2],this.type="input",this.state="connected",this.connection="pending",this.onstatechange=null,this._onmidimessage=null,Object.defineProperty(this,"onmidimessage",{set:function(e){this._onmidimessage=e,"function"==typeof e&&this.open()}}),this._listeners=(new Map).set("midimessage",new Set).set("statechange",new Set),this._inLongSysexMessage=!1,this._sysexBuffer=new Uint8Array,this._jazzInstance=n,this._jazzInstance.inputInUse=!0,"linux"===o.getDevice().platform&&this._jazzInstance.MidiInOpen(this.name,c.bind(this))}return s(e,[{key:"addEventListener",value:function(e,t,n){var i=this._listeners.get(e);void 0!==i&&i.has(t)===!1&&i.add(t)}},{key:"removeEventListener",value:function(e,t,n){var i=this._listeners.get(e);void 0!==i&&i.has(t)===!1&&i["delete"](t)}},{key:"dispatchEvent",value:function(e){var t=this._listeners.get(e.type);t.forEach(function(t){t(e)}),"midimessage"===e.type?null!==this._onmidimessage&&this._onmidimessage(e):"statechange"===e.type&&null!==this.onstatechange&&this.onstatechange(e)}},{key:"open",value:function(){"open"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiInOpen(this.name,c.bind(this)),this.connection="open",r.dispatchEvent(this))}},{key:"close",value:function(){"closed"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiInClose(),this.connection="closed",r.dispatchEvent(this),this._onmidimessage=null,this.onstatechange=null,this._listeners.get("midimessage").clear(),this._listeners.get("statechange").clear())}},{key:"_appendToSysexBuffer",value:function(e){var t=this._sysexBuffer.length,n=new Uint8Array(t+e.length);n.set(this._sysexBuffer),n.set(e,t),this._sysexBuffer=n}},{key:"_bufferLongSysex",value:function(e,t){for(var n=t;n<e.length;){if(247==e[n])return n++,this._appendToSysexBuffer(e.slice(t,n)),n;n++}return this._appendToSysexBuffer(e.slice(t,n)),this._inLongSysexMessage=!0,n}}]),e}();n.MIDIInput=f,c=function(e,t){var n=0,i=void 0,s=!1;for(i=0;i<t.length;i+=n){var o=!0;if(this._inLongSysexMessage){if(i=this._bufferLongSysex(t,i),247!=t[i-1])return;s=!0}else switch(s=!1,240&t[i]){case 0:n=1,o=!1;break;case 128:case 144:case 160:case 176:case 224:n=3;break;case 192:case 208:n=2;break;case 240:switch(t[i]){case 240:if(i=this._bufferLongSysex(t,i),247!=t[i-1])return;s=!0;break;case 241:case 243:n=2;break;case 242:n=3;break;default:n=1}}if(o){var r={};if(r.receivedTime=parseFloat(e.toString())+this._jazzInstance._perfTimeZero,s||this._inLongSysexMessage?(r.data=new Uint8Array(this._sysexBuffer),this._sysexBuffer=new Uint8Array(0),this._inLongSysexMessage=!1):r.data=new Uint8Array(t.slice(i,n+i)),u)this._onmidimessage&&this._onmidimessage(r);else{var c=new a.MIDIMessageEvent(this,r.data,r.receivedTime);this.dispatchEvent(c)}}}}},{"./midi_access":3,"./midiconnection_event":6,"./midimessage_event":7,"./util":9}],5:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function(){function e(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(t,n,i){return n&&e(t.prototype,n),i&&e(t,i),t}}(),o=e("./util"),a=e("./midi_access"),r=function(){function e(t,n){i(this,e),this.id=a.getMIDIDeviceId(t[0],"output"),this.name=t[0],this.manufacturer=t[1],this.version=t[2],this.type="output",this.state="connected",this.connection="pending",this.onmidimessage=null,this.onstatechange=null,this._listeners=new Set,this._inLongSysexMessage=!1,this._sysexBuffer=new Uint8Array,this._jazzInstance=n,this._jazzInstance.outputInUse=!0,"linux"===o.getDevice().platform&&this._jazzInstance.MidiOutOpen(this.name)}return s(e,[{key:"open",value:function(){"open"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiOutOpen(this.name),this.connection="open",a.dispatchEvent(this))}},{key:"close",value:function(){"closed"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiOutClose(),this.connection="closed",a.dispatchEvent(this),this.onstatechange=null,this._listeners.clear())}},{key:"send",value:function(e,t){var n=this,i=0;return 0===e.length?!1:(t&&(i=Math.floor(t-performance.now())),t&&i>1?setTimeout(function(){n._jazzInstance.MidiOutLong(e)},i):this._jazzInstance.MidiOutLong(e),!0)}},{key:"clear",value:function(){}},{key:"addEventListener",value:function(e,t,n){"statechange"===e&&this._listeners.has(t)===!1&&this._listeners.add(t)}},{key:"removeEventListener",value:function(e,t,n){"statechange"===e&&this._listeners.has(t)===!1&&this._listeners["delete"](t)}},{key:"dispatchEvent",value:function(e){this._listeners.forEach(function(t){t(e)}),null!==this.onstatechange&&this.onstatechange(e)}}]),e}();n.MIDIOutput=r},{"./midi_access":3,"./util":9}],6:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function o(e,t){i(this,o),this.bubbles=!1,this.cancelBubble=!1,this.cancelable=!1,this.currentTarget=e,this.defaultPrevented=!1,this.eventPhase=0,this.path=[],this.port=t,this.returnValue=!0,this.srcElement=e,this.target=e,this.timeStamp=Date.now(),this.type="statechange"};n.MIDIConnectionEvent=s},{}],7:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function o(e,t,n){i(this,o),this.bubbles=!1,this.cancelBubble=!1,this.cancelable=!1,this.currentTarget=e,this.data=t,this.defaultPrevented=!1,this.eventPhase=0,this.path=[],this.receivedTime=n,this.returnValue=!0,this.srcElement=e,this.target=e,this.timeStamp=Date.now(),this.type="midimessage"};n.MIDIMessageEvent=s},{}],8:[function(e,t,n){"use strict";var i=e("./midi_access"),s=e("./util"),o=void 0;!function(){navigator.requestMIDIAccess||(s.polyfill(),navigator.requestMIDIAccess=function(){return void 0===o&&(o=i.createMIDIAccess()),o},s.getDevice().nodejs===!0&&(navigator.close=function(){i.closeAllMIDIInputs()}))}()},{"./midi_access":3,"./util":9}],9:[function(e,t,n){(function(e,t){"use strict";function i(){if(void 0!==c)return c;var t="undetected",n="undetected";if(navigator.nodejs)return t=e.platform,c={platform:t,nodejs:!0,mobile:"ios"===t||"android"===t};var i=navigator.userAgent;return i.match(/(iPad|iPhone|iPod)/g)?t="ios":-1!==i.indexOf("Android")?t="android":-1!==i.indexOf("Linux")?t="linux":-1!==i.indexOf("Macintosh")?t="osx":-1!==i.indexOf("Windows")&&(t="windows"),-1!==i.indexOf("Chrome")?(n="chrome",-1!==i.indexOf("OPR")?n="opera":-1!==i.indexOf("Chromium")&&(n="chromium")):-1!==i.indexOf("Safari")?n="safari":-1!==i.indexOf("Firefox")?n="firefox":-1!==i.indexOf("Trident")&&(n="ie",-1!==i.indexOf("MSIE 9")&&(n="ie9")),"ios"===t&&-1!==i.indexOf("CriOS")&&(n="chrome"),c={platform:t,browser:n,mobile:"ios"===t||"android"===t,nodejs:!1}}function s(){void 0===performance&&(performance={}),Date.now=Date.now||function(){return(new Date).getTime()},void 0===performance.now&&!function(){var e=Date.now();void 0!==performance.timing&&void 0!==performance.timing.navigationStart&&(e=performance.timing.navigationStart),performance.now=function(){return Date.now()-e}}()}function o(){var e=(new Date).getTime(),t=new Array(64).join("x");return t=t.replace(/[xy]/g,function(t){var n=(e+16*Math.random())%16|0;return e=Math.floor(e/16),("x"==t?n:3&n|8).toString(16).toUpperCase()})}function a(e){"function"!=typeof e.Promise&&(e.Promise=function(e){this.executor=e},e.Promise.prototype.then=function(e,t){"function"!=typeof e&&(e=function(){}),"function"!=typeof t&&(t=function(){}),this.executor(e,t)})}function r(){var e=i();"ie"===e.browser?a(window):e.nodejs===!0&&a(t),s()}Object.defineProperty(n,"__esModule",{value:!0}),n.getDevice=i,n.polyfillPerformance=s,n.generateUUID=o,n.polyfillPromise=a,n.polyfill=r;var c=void 0}).call(this,e("_process"),"undefined"!=typeof global?global:"undefined"!=typeof self?self:"undefined"!=typeof window?window:{})},{_process:1}]},{},[8]);
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
 },{}],20:[function(require,module,exports){
 /*
 class to parse the .mid file format
@@ -4634,7 +4633,10 @@ module.exports = audioDetect;
  GeneralMIDI
  ----------------------------------------------------------
  */
-var root = {};
+var root = {};3
+/**
+ * todo: way to clever code, needs to be simplified
+ */
 root.GM = (function (arr) {
     var clean = function (name) {
         return name.replace(/[^a-z0-9 ]/gi, '').replace(/[ ]/g, '_').toLowerCase();
@@ -4676,7 +4678,7 @@ root.GM = (function (arr) {
     'Synth Lead': ['81 Lead 1 (square)', '82 Lead 2 (sawtooth)', '83 Lead 3 (calliope)', '84 Lead 4 (chiff)', '85 Lead 5 (charang)', '86 Lead 6 (voice)', '87 Lead 7 (fifths)', '88 Lead 8 (bass + lead)'],
     'Synth Pad': ['89 Pad 1 (new age)', '90 Pad 2 (warm)', '91 Pad 3 (polysynth)', '92 Pad 4 (choir)', '93 Pad 5 (bowed)', '94 Pad 6 (metallic)', '95 Pad 7 (halo)', '96 Pad 8 (sweep)'],
     'Synth Effects': ['97 FX 1 (rain)', '98 FX 2 (soundtrack)', '99 FX 3 (crystal)', '100 FX 4 (atmosphere)', '101 FX 5 (brightness)', '102 FX 6 (goblins)', '103 FX 7 (echoes)', '104 FX 8 (sci-fi)'],
-    'Ethnic': ['105 Sitar', '106 Banjo', '107 Shamisen', '108 Koto', '109 Kalimba', '110 Bagpipe', '111 Fiddle', '112 Shanai'],
+    'Ethnic': ['105 Sitar', '106 Banjo', '107 Shamisen', '108 Koto', '109 Kalimba', '110 Bag pipe', '111 Fiddle', '112 Shanai'],
     'Percussive': ['113 Tinkle Bell', '114 Agogo', '115 Steel Drums', '116 Woodblock', '117 Taiko Drum', '118 Melodic Tom', '119 Synth Drum'],
     'Sound effects': ['120 Reverse Cymbal', '121 Guitar Fret Noise', '122 Breath Noise', '123 Seashore', '124 Bird Tweet', '125 Telephone Ring', '126 Helicopter', '127 Applause', '128 Gunshot']
 });
@@ -4815,12 +4817,13 @@ module.exports = function() {
         var channels = {};
         for (var i = 0; i < 16; i++) {
             channels[i] = { // default values
-                instrument: i,
+                instrument: 0,
                 pitchBend: 0,
                 mute: false,
                 mono: false,
                 omni: false,
-                solo: false
+                solo: false,
+                volume: 1
             };
         }
         return channels;
@@ -4840,6 +4843,12 @@ module.exports = function() {
             opts = {onsuccess: opts};
         }
 
+        if(typeof opts.channels !== 'undefined'){
+            for (var i = 0; i < opts.channels.length ; i++){
+                root.channels[i].instrument = opts.channels[i]
+            }
+        }
+
         root.soundfontUrl = opts.soundfontUrl || root.soundfontUrl;
 
         /// Detect the best type of audio to use
@@ -4853,15 +4862,15 @@ module.exports = function() {
                 api = hash.substr(1);
             }
             /*
-            else if (supports.webmidi) {
-                api = 'webmidi';
-            }
+             else if (supports.webmidi) {
+             api = 'webmidi';
+             }
              */
             else if (window.AudioContext) { // Chrome
                 api = 'webaudio';
 
             }
-             else if (window.Audio) { // Firefox
+            else if (window.Audio) { // Firefox
                 api = 'audiotag';
             }
 
@@ -4898,15 +4907,22 @@ module.exports = function() {
                 instruments = [];
             }
         }
+
         /// convert numeric ids into strings
         for (var i = 0; i < instruments.length; i++) {
             var instrument = instruments[i];
             if (instrument === +instrument) { // is numeric
                 if (generalMIDI.GM.byId[instrument]) {
-                    instruments[i] = generalMIDI.GM.byId[instrument].id;
+                    var ins = generalMIDI.GM.byId[instrument];
+                    instruments[i] = ins.id;
+                    // if the instrument is a percussion add it to channel 10
+                    if(ins['category'] === 'Percussive'){
+                        root.channels[9].instrument = ins.number;
+                    }
                 }
             }
         }
+
         ///
         opts.format = root.__audioFormat;
         opts.instruments = instruments;
@@ -4967,34 +4983,22 @@ module.exports = function() {
 
     var sendRequest = function (instrumentId, audioFormat, onprogress, onsuccess, onerror) {
         var soundfontPath = root.soundfontUrl + instrumentId + '-' + audioFormat + '.js';
+        request({
+            url: soundfontPath,
+            format: 'text',
+            onerror: onerror,
+            onprogress: onprogress,
+            onsuccess: function (event, responseText) {
+                var script = document.createElement('script');
+                script.language = 'javascript';
+                script.type = 'text/javascript';
+                script.text = responseText;
+                document.body.appendChild(script);
 
-        if (root.USE_XHR) {
-            request({
-                url: soundfontPath,
-                format: 'text',
-                onerror: onerror,
-                onprogress: onprogress,
-                onsuccess: function (event, responseText) {
-                    var script = document.createElement('script');
-                    script.language = 'javascript';
-                    script.type = 'text/javascript';
-                    script.text = responseText;
-                    document.body.appendChild(script);
-
-                    ///
-                    onsuccess();
-                }
-            });
-        } else {
-            dom.loadScript.add({
-                url: soundfontPath,
-                verify: 'MIDI.Soundfont["' + instrumentId + '"]',
-                onerror: onerror,
-                onsuccess: function () {
-                    onsuccess();
-                }
-            });
-        }
+                ///
+                onsuccess();
+            }
+        });
     };
 
     root.setDefaultPlugin = function (midi) {
@@ -5026,8 +5030,6 @@ module.exports = function (MIDI) {
     midi.playing = false;
     midi.timeWarp = 1;
     midi.startDelay = 0;
-    midi.BPM = 120;
-
     midi.start =
         midi.resume = function (onsuccess) {
             if (midi.currentTime < -1) {
@@ -5113,16 +5115,9 @@ module.exports = function (MIDI) {
     };
     // helpers
     midi.loadMidiFile = function (onsuccess, onprogress, onerror) {
-        midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null, midi.BPM);
+        midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null);
         midi.data = midi.replayer.getData();
         midi.endTime = getLength();
-        ///
-        MIDI.loadPlugin({
-			instruments: midi.getFileInstruments(),
-            onsuccess: onsuccess,
-            onprogress: onprogress,
-            onerror: onerror
-        });
     };
 
     midi.loadFile = function (file, onsuccess, onprogress, onerror) {
@@ -5276,7 +5271,7 @@ module.exports = function (MIDI) {
         var ctx = getContext();
         var length = data.length;
         //
-        queuedTime = 0.5;
+        queuedTime = 0;
         ///
         var interval = eventQueue[0] && eventQueue[0].interval || 0;
         var foffset = currentTime - midi.currentTime;
@@ -5293,7 +5288,7 @@ module.exports = function (MIDI) {
         ///
         for (var n = 0; n < length && messages < 100; n++) {
             var obj = data[n];
-            if ((queuedTime += obj[1]) <= currentTime) {
+            if ((queuedTime += obj[1]) < currentTime) {
                 offset = queuedTime;
                 continue;
             }
@@ -5306,6 +5301,7 @@ module.exports = function (MIDI) {
             }
             ///
             var channelId = event.channel;
+
             var channel = MIDI.channels[channelId];
             var delay = ctx.currentTime + ((currentTime + foffset + midi.startDelay) / 1000);
             var queueTime = queuedTime - offset + midi.startDelay;
@@ -5314,7 +5310,10 @@ module.exports = function (MIDI) {
                     MIDI.setController(channelId, event.controllerType, event.value, delay);
                     break;
                 case 'programChange':
-                    MIDI.programChange(channelId, event.programNumber, delay);
+                    // the percussion should not be set from the midi, it is set in the loader.
+                    if(channelId != 9){
+                        MIDI.programChange(channelId, event.programNumber, delay);
+                    }
                     break;
                 case 'pitchBend':
                     MIDI.pitchBend(channelId, event.value, delay);
@@ -5322,12 +5321,13 @@ module.exports = function (MIDI) {
                 case 'noteOn':
                     if (channel.mute) break;
                     note = event.noteNumber - (midi.MIDIOffset || 0);
-                    eventQueue.push({
+                    var temp = {
                         event: event,
                         time: queueTime,
                         source: MIDI.noteOn(channelId, event.noteNumber, event.velocity, delay),
                         interval: scheduleTracking(channelId, note, queuedTime + midi.startDelay, offset - foffset, 144, event.velocity)
-                    });
+                    };
+                    eventQueue.push(temp);
                     messages++;
                     break;
                 case 'noteOff':
@@ -5381,6 +5381,18 @@ module.exports = function (MIDI) {
         noteRegistrar = {};
     };
 
+    midi.setChannelVolume = function(val, channel){
+        MIDI.channels[channel].volume = val;
+        if(MIDI.api === "webaudio"){
+            for(var i = 0; i < eventQueue.length; i++){
+                var event = eventQueue[i];
+                if (event && event.source && typeof event.source.setChannelVolume === 'function' && event.source.channel === channel){
+                    event.source.setChannelVolume(val);
+                }
+            }
+        }
+    };
+
     return midi;
 };
 
@@ -5424,7 +5436,7 @@ var playChannel = function (channel, note) {
             return;
         }
         audio.src = window.MIDI.Soundfont[instrumentId][note.id];
-        audio.volume = volume / 127;
+        audio.volume = (volume * channels[channel].volume) / 127;
         audio.play();
         buffer_nid = nid;
     }
@@ -5586,6 +5598,7 @@ midi.programChange = function (channelId, program, delay) {
 // 					channel.instrument = program;
 // 				}, delay);
 // 			} else {
+
     var channel = channels[channelId];
     channel.instrument = program;
 // 			}
@@ -5608,13 +5621,12 @@ midi.noteOn = function (channelId, noteId, velocity, delay) {
 
     /// check whether the note exists
     var channel = channels[channelId];
-
     var instrument = channel.instrument;
     var bufferId = instrument + '' + noteId;
 
     var buffer = audioBuffers[bufferId];
     if (!buffer) {
-		//console.log(generalMIDI.GM.byId[instrument].id, instrument, channelId);
+        console.log(generalMIDI.GM.byId[instrument].id, instrument, channelId);
         return;
     }
 
@@ -5641,12 +5653,20 @@ midi.noteOn = function (channelId, noteId, velocity, delay) {
     }
 
     /// add gain + pitchShift
-    var gain = (velocity / 127) * (masterVolume / 127) * 2 - 1;
     source.connect(ctx.destination);
     source.playbackRate.value = 1; // pitch shift
     source.gainNode = ctx.createGain(); // gain
     source.gainNode.connect(ctx.destination);
-    source.gainNode.gain.value = Math.min(1.0, Math.max(-1.0, gain));
+    function getGainValue(vol, channelVol, masterVol) {
+        return Math.max(-1, (vol * channelVol / 127) * (masterVol / 127) * 2 - 1);
+    }
+
+    source.gainNode.gain.value = getGainValue(velocity, channel.volume, masterVolume);
+    source.setChannelVolume = function (vol) {
+        source.gainNode.gain.cancelScheduledValues(ctx.currentTime);
+        source.gainNode.gain.value = getGainValue(velocity, vol, masterVolume);
+    };
+    source.channel = channelId;
     source.connect(source.gainNode);
     ///
     if (useStreamingBuffer) {
@@ -5885,7 +5905,7 @@ module.exports = midi;
  ----------------------------------------------------------------------
  */
 'use strict';
-require('../../node_modules/web-midi-api/WebMIDIAPI.min.js');
+require('web-midi-api/WebMIDIAPI.min.js');
 var plugin = null;
 var output = null;
 var midi = {api: 'webmidi'};
@@ -5952,7 +5972,7 @@ midi.connect = function (opts) {
 };
 
 module.exports = midi;
-},{"../../node_modules/web-midi-api/WebMIDIAPI.min.js":19}],32:[function(require,module,exports){
+},{"web-midi-api/WebMIDIAPI.min.js":19}],32:[function(require,module,exports){
 /*
 	-----------------------------------------------------------
 	dom.loadScript.js : 0.1.4 : 2014/02/12 : http://mudcu.be
@@ -6317,7 +6337,6 @@ var request = function (opts, onsuccess, onerror, onprogress) {
 
 module.exports = request;
 
-},{}]},{},[24])
-
+},{}]},{},[24]);
 
 //# sourceMappingURL=bundle.js.map

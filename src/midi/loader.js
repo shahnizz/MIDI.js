@@ -40,7 +40,7 @@ module.exports = function() {
         var channels = {};
         for (var i = 0; i < 16; i++) {
             channels[i] = { // default values
-                instrument: i,
+                instrument: 0,
                 pitchBend: 0,
                 mute: false,
                 mono: false,
@@ -130,15 +130,22 @@ module.exports = function() {
                 instruments = [];
             }
         }
+
         /// convert numeric ids into strings
         for (var i = 0; i < instruments.length; i++) {
             var instrument = instruments[i];
             if (instrument === +instrument) { // is numeric
                 if (generalMIDI.GM.byId[instrument]) {
-                    instruments[i] = generalMIDI.GM.byId[instrument].id;
+                    var ins = generalMIDI.GM.byId[instrument];
+                    instruments[i] = ins.id;
+                    // if the instrument is a percussion add it to channel 10
+                    if(ins['category'] === 'Percussive'){
+                        root.channels[9].instrument = ins.number;
+                    }
                 }
             }
         }
+
         ///
         opts.format = root.__audioFormat;
         opts.instruments = instruments;

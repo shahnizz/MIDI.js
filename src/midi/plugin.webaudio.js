@@ -44,6 +44,7 @@ midi.programChange = function (channelId, program, delay) {
 // 					channel.instrument = program;
 // 				}, delay);
 // 			} else {
+
     var channel = channels[channelId];
     channel.instrument = program;
 // 			}
@@ -66,13 +67,12 @@ midi.noteOn = function (channelId, noteId, velocity, delay) {
 
     /// check whether the note exists
     var channel = channels[channelId];
-
     var instrument = channel.instrument;
     var bufferId = instrument + '' + noteId;
 
     var buffer = audioBuffers[bufferId];
     if (!buffer) {
-        //console.log(generalMIDI.GM.byId[instrument].id, instrument, channelId);
+        console.log(generalMIDI.GM.byId[instrument].id, instrument, channelId);
         return;
     }
 

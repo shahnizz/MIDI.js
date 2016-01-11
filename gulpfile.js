@@ -16,14 +16,16 @@ gulp.task('browserify', function () {
 
 
 function build() {
-    var b = browserify();
-    b.plugin('partition-bundle', {
-        output : 'dist',
-        main: './src/main',
-        url: './dist'
-    });
+
+    var b = browserify('./src/main.js');
     return b.bundle()
         .on('error', gutil.log.bind(gutil, 'Browserify Error'))
+        .pipe(source('bundle.js'))
+        .pipe(buffer())
+        .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
+        // Add transformation tasks to the pipeline here.
+        .pipe(sourcemaps.write('./')) // writes .map file
+        .pipe(gulp.dest('./dist'));
 }
 
 gulp.task('watchify', function () {

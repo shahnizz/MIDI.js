@@ -298,7 +298,10 @@ module.exports = function (MIDI) {
                     MIDI.setController(channelId, event.controllerType, event.value, delay);
                     break;
                 case 'programChange':
-                    MIDI.programChange(channelId, event.programNumber, delay);
+                    // the percussion should not be set from the midi, it is set in the loader.
+                    if(channelId != 9){
+                        MIDI.programChange(channelId, event.programNumber, delay);
+                    }
                     break;
                 case 'pitchBend':
                     MIDI.pitchBend(channelId, event.value, delay);
@@ -306,12 +309,13 @@ module.exports = function (MIDI) {
                 case 'noteOn':
                     if (channel.mute) break;
                     note = event.noteNumber - (midi.MIDIOffset || 0);
-                    eventQueue.push({
+                    var temp = {
                         event: event,
                         time: queueTime,
                         source: MIDI.noteOn(channelId, event.noteNumber, event.velocity, delay),
                         interval: scheduleTracking(channelId, note, queuedTime + midi.startDelay, offset - foffset, 144, event.velocity)
-                    });
+                    };
+                    eventQueue.push(temp);
                     messages++;
                     break;
                 case 'noteOff':
