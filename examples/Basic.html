@@ -13,16 +13,15 @@ window.onload = function () {
 
 	midi.loadPlugin({
 		soundfontUrl: "./soundfont/",
-		instrument: "synth_drum",
 		onprogress: function(state, progress) {
 			console.log(state, progress);
 		},
 		onsuccess: function() {
 			var delay = 0; // play one note every quarter second
-			var note = 20; // the MIDI note
+			var note = 50; // the MIDI note
 			var velocity = 127; // how hard the note hits
 			// play the note
-			midi.setVolume(0, 127,0);
+			midi.setVolume(0, 127);
 			midi.noteOn(0, note, velocity, delay);
 			midi.noteOff(0, note, delay + 0.75);
 		}
