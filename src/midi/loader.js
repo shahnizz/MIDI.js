@@ -1,234 +1,408 @@
-/**
+/*
  ----------------------------------------------------------
- MIDI.Plugin : 0.3.4 : 2015-03-26
+ MIDI.Player : 0.3.1 : 2015-03-26
  ----------------------------------------------------------
  https://github.com/mudcube/MIDI.js
  ----------------------------------------------------------
- Inspired by javax.sound.midi (albeit a super simple version):
- http://docs.oracle.com/javase/6/docs/api/javax/sound/midi/package-summary.html
- ----------------------------------------------------------
- Technologies
- ----------------------------------------------------------
- Web MIDI API - no native support yet (jazzplugin)
- Web Audio API - firefox 25+, chrome 10+, safari 6+, opera 15+
- HTML5 Audio Tag - ie 9+, firefox 3.5+, chrome 4+, safari 4+, opera 9.5+, ios 4+, android 2.3+
- ----------------------------------------------------------
- **/
-
-
-module.exports = function() {
-    window.MIDI = {};
-    window.MIDI.Soundfont = {};
-    'use strict';
-    var audioDetect = require('./audioDetect');
+ */
+module.exports = function (MIDI) {
     var generalMIDI = require('./gm');
-    var _ = {
-        merge : require('lodash.merge')
-    };
-    var webMidi = require('./plugin.webmidi');
-    var audiotag = require('./plugin.audiotag');
-    var webaudio = require('./plugin.webaudio');
-    var request = require('../util/dom_request_xhr');
-    var dom = require('../util/dom_request_script');
-
-    var root = {};
-    root.Player = require('./player')(root);
-    root.DEBUG = true;
-    root.USE_XHR = true;
-    root.soundfontUrl = './soundfont/';
-    root.channels = (function () { // 0 - 15 channels
-        var channels = {};
-        for (var i = 0; i < 16; i++) {
-            channels[i] = { // default values
-                instrument: 0,
-                pitchBend: 0,
-                mute: false,
-                mono: false,
-                omni: false,
-                solo: false,
-                volume: 1
-            };
-        }
-        return channels;
-    })();
-    /*
-     MIDI.loadPlugin({
-     onsuccess: function() { },
-     onprogress: function(state, percent) { },
-     targetFormat: 'mp3', // optionally can force to use MP3 (for instance on mobile networks)
-     instrument: 'acoustic_grand_piano', // or 1 (default)
-     instruments: [ 'acoustic_grand_piano', 'acoustic_guitar_nylon' ] // or multiple instruments
-     });
-     */
-
-    root.loadPlugin = function (opts) {
-        if (typeof opts === 'function') {
-            opts = {onsuccess: opts};
-        }
-
-        if(typeof opts.channels !== 'undefined'){
-            for (var i = 0; i < opts.channels.length ; i++){
-                root.channels[i].instrument = opts.channels[i]
+    var Replayer = require('../jasmid/replayer');
+    var MidiFile = require('../jasmid/midifile');
+    'use strict';
+    var midi = {};
+    midi.tracks = {};
+    midi.currentTime = 0;
+    midi.endTime = 0;
+    midi.restart = 0;
+    midi.playing = false;
+    midi.timeWarp = 1;
+    midi.startDelay = 0;
+    midi.start =
+        midi.resume = function (onsuccess) {
+            if (midi.currentTime < -1) {
+                midi.currentTime = -1;
             }
-        }
+            startAudio(midi.currentTime, null, onsuccess);
+        };
 
-        root.soundfontUrl = opts.soundfontUrl || root.soundfontUrl;
-
-        /// Detect the best type of audio to use
-        audioDetect(function (supports) {
-            var hash = window.location.hash;
-            var api = '';
-            /// use the most appropriate plugin if not specified
-            if (supports[opts.api]) {
-                api = opts.api;
-            } else if (supports[hash.substr(1)]) {
-                api = hash.substr(1);
-            }
-            /*
-             else if (supports.webmidi) {
-             api = 'webmidi';
-             }
-             */
-            else if (window.AudioContext) { // Chrome
-                api = 'webaudio';
-
-            }
-            else if (window.Audio) { // Firefox
-                api = 'audiotag';
-            }
-
-            /// use audio/ogg when supported
-            if (opts.targetFormat) {
-                var audioFormat = opts.targetFormat;
-            } else { // use best quality
-                var audioFormat = supports['audio/ogg'] ? 'ogg' : 'mp3';
-            }
-
-            /// load the specified plugin
-            root.__api = api;
-            root.__audioFormat = audioFormat;
-            root.supports = supports;
-            root.loadResource(opts);
-        });
+    midi.pause = function () {
+        var tmp = midi.restart;
+        stopAudio();
+        midi.restart = tmp;
     };
 
-    /*
-     root.loadResource({
-     onsuccess: function() { },
-     onprogress: function(state, percent) { },
-     instrument: 'banjo'
-     })
-     */
+    midi.stop = function () {
+        stopAudio();
+        midi.restart = 0;
+        midi.currentTime = 0;
+    };
 
-    root.loadResource = function (opts) {
-        var instruments = opts.instruments || opts.instrument || 'acoustic_grand_piano';
+    midi.addListener = function (onsuccess) {
+        onMidiEvent = onsuccess;
+    };
+
+    midi.removeListener = function () {
+        onMidiEvent = undefined;
+    };
+
+    midi.clearAnimation = function () {
+        if (midi.animationFrameId) {
+            cancelAnimationFrame(midi.animationFrameId);
+        }
+    };
+
+    midi.setAnimation = function (callback) {
+        var currentTime = 0;
+        var tOurTime = 0;
+        var tTheirTime = 0;
+        //
+        midi.clearAnimation();
         ///
-        if (typeof instruments !== 'object') {
-            if (instruments || instruments === 0) {
-                instruments = [instruments];
+        var frame = function () {
+            midi.animationFrameId = requestAnimationFrame(frame);
+            ///
+            if (midi.endTime === 0) {
+                return;
+            }
+            if (midi.playing) {
+                currentTime = (tTheirTime === midi.currentTime) ? tOurTime - Date.now() : 0;
+                if (midi.currentTime === 0) {
+                    currentTime = 0;
+                } else {
+                    currentTime = midi.currentTime - currentTime;
+                }
+                if (tTheirTime !== midi.currentTime) {
+                    tOurTime = Date.now();
+                    tTheirTime = midi.currentTime;
+                }
+            } else { // paused
+                currentTime = midi.currentTime;
+            }
+            ///
+            var endTime = midi.endTime;
+            var percent = currentTime / endTime;
+            var total = currentTime / 1000;
+            var minutes = total / 60;
+            var seconds = total - (minutes * 60);
+            var t1 = minutes * 60 + seconds;
+            var t2 = (endTime / 1000);
+            ///
+            if (t2 - t1 < -1.0) {
+                return;
             } else {
-                instruments = [];
+                callback({
+                    now: t1,
+                    end: t2,
+                    events: noteRegistrar
+                });
+            }
+        };
+        ///
+        requestAnimationFrame(frame);
+    };
+    // helpers
+    midi.loadMidiFile = function (onsuccess, onprogress, onerror) {
+        midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null);
+        midi.data = midi.replayer.getData();
+        midi.endTime = getLength();
+        midi.tracks = midi.getFileTracks();
+        midi.instruments = midi.getFileInstruments();
+        MIDI.loadResource({instruments : midi.instruments, "onsuccess":onsuccess, onprogress: onprogress, onerror: onerror});
+    };
+
+    midi.loadFile = function (file, onsuccess, onprogress, onerror) {
+        midi.stop();
+        if (file.indexOf('base64,') !== -1) {
+            var data = window.atob(file.split(',')[1]);
+            midi.currentData = data;
+            midi.loadMidiFile(onsuccess, onprogress, onerror);
+        } else {
+            var fetch = new XMLHttpRequest();
+            fetch.open('GET', file);
+            fetch.overrideMimeType('text/plain; charset=x-user-defined');
+            fetch.onreadystatechange = function () {
+                if (this.readyState === 4) {
+                    if (this.status === 200) {
+                        var t = this.responseText || '';
+                        var ff = [];
+                        var mx = t.length;
+                        var scc = String.fromCharCode;
+                        for (var z = 0; z < mx; z++) {
+                            ff[z] = scc(t.charCodeAt(z) & 255);
+                        }
+                        ///
+                        var data = ff.join('');
+                        midi.currentData = data;
+                        midi.loadMidiFile(onsuccess, onprogress, onerror);
+                    } else {
+                        onerror && onerror('Unable to load MIDI file');
+                    }
+                }
+            };
+            fetch.send();
+        }
+    };
+
+    midi.getFileTracks = function(){
+        var tracks = {};
+        for (var n = 0; n < midi.data.length; n++) {
+            var event = midi.data[n][0].event;
+            if (event.type !== 'channel') {
+                continue;
+            }
+            var channel = event.channel;
+            switch (event.subtype) {
+                case 'programChange':
+                    tracks[midi.data[n][0].track] = channel;
+                    break;
+            }
+        }
+        return tracks;
+    }
+    midi.getFileInstruments = function () {
+        var instruments = {};
+        var programs = {};
+        var channels ={};
+
+        for (var n = 0; n < midi.data.length; n++) {
+            var event = midi.data[n][0].event;
+            if (event.type !== 'channel') {
+                continue;
+            }
+            var channel = event.channel;
+            switch (event.subtype) {
+                case 'controller':(event)
+//				console.log(event.channel, MIDI.defineControl[event.controllerType], event.value);
+                    break;
+                case 'programChange':
+                    programs[channel] = event.programNumber;
+                    var gm = generalMIDI.GM.byId(event.programNumber);
+                    instruments[gm.id] = true;
+
+                    break;
             }
         }
 
-        /// convert numeric ids into strings
-        for (var i = 0; i < instruments.length; i++) {
-            var instrument = instruments[i];
-            if (instrument === +instrument) { // is numeric
-                if (generalMIDI.GM.byId(instrument)) {
-                    var ins = generalMIDI.GM.byId(instrument);
-                    instruments[i] = ins.id;
-                    // if the instrument is a percussion add it to channel 10
-                    if(ins['category'] === 'Percussive'){
-                        root.channels[9].instrument = ins.number;
+        var ret = [];
+        for (var key in instruments) {
+            ret.push(key);
+        }
+        return ret;
+    };
+
+    // Playing the audio
+
+    var eventQueue = []; // hold events to be triggered
+    var queuedTime; //
+    var startTime = 0; // to measure time elapse
+    var noteRegistrar = {}; // get event for requested note
+    var onMidiEvent = undefined; // listener
+    var scheduleTracking = function (channel, note, currentTime, offset, message, velocity, time) {
+        return setTimeout(function () {
+            var data = {
+                channel: channel,
+                note: note,
+                now: currentTime,
+                end: midi.endTime,
+                message: message,
+                velocity: velocity
+            };
+            //
+            if (message === 128) {
+                delete noteRegistrar[note];
+            } else {
+                noteRegistrar[note] = data;
+            }
+            if (onMidiEvent) {
+                onMidiEvent(data);
+            }
+            midi.currentTime = currentTime;
+            ///
+            eventQueue.shift();
+            ///
+            if (eventQueue.length < 1000) {
+                startAudio(queuedTime, true);
+            } else if (midi.currentTime === queuedTime && queuedTime < midi.endTime) { // grab next sequence
+                startAudio(queuedTime, true);
+            }
+        }, currentTime - offset);
+    };
+
+    var getContext = function () {
+        if (MIDI.api === 'webaudio') {
+            return MIDI.getContext();
+        } else {
+            midi.ctx = {currentTime: 0};
+        }
+        return midi.ctx;
+    };
+
+    var getLength = function () {
+        var data = midi.data;
+        var length = data.length;
+        var totalTime = 0.5;
+        for (var n = 0; n < length; n++) {
+            totalTime += data[n][1];
+        }
+        return totalTime;
+    };
+
+    var __now;
+    var getNow = function () {
+        if (window.performance && window.performance.now) {
+            return window.performance.now();
+        } else {
+            return Date.now();
+        }
+    };
+
+    var startAudio = function (currentTime, fromCache, onsuccess) {
+        if (!midi.replayer) {
+            return;
+        }
+        if (!fromCache) {
+            if (typeof currentTime === 'undefined') {
+                currentTime = midi.restart;
+            }
+            ///
+            midi.playing && stopAudio();
+            midi.playing = true;
+            midi.data = midi.replayer.getData();
+            midi.endTime = getLength();
+        }
+        ///
+        var note;
+        var offset = 0;
+        var messages = 0;
+        var data = midi.data;
+        var ctx = getContext();
+        var length = data.length;
+        //
+        queuedTime = 0;
+        ///
+        var interval = eventQueue[0] && eventQueue[0].interval || 0;
+        var foffset = currentTime - midi.currentTime;
+        ///
+        if (MIDI.api === 'webmidi') {
+            ctx.currentTime = getNow() / 1000;
+        } else if (MIDI.api !== 'webaudio') { // set currentTime on ctx
+            var now = getNow();
+            __now = __now || now;
+            ctx.currentTime = (now - __now) / 1000;
+        }
+        ///
+        startTime = ctx.currentTime;
+        ///
+        for (var n = 0; n < length && messages < 100; n++) {
+            var obj = data[n];
+            if ((queuedTime += obj[1]) < currentTime) {
+                offset = queuedTime;
+                continue;
+            }
+            ///
+            currentTime = queuedTime - offset;
+            ///
+            var event = obj[0].event;
+            if (event.type !== 'channel') {
+                continue;
+            }
+            ///
+            var channelId = event.channel;
+
+            var channel = MIDI.channels[channelId];
+            var delay = ctx.currentTime + ((currentTime + foffset + midi.startDelay) / 1000);
+            var queueTime = queuedTime - offset + midi.startDelay;
+            switch (event.subtype) {
+                case 'controller':
+                    MIDI.setController(channelId, event.controllerType, event.value, delay);
+                    break;
+                case 'programChange':
+                    // the percussion should not be set from the midi, it is set in the loader.
+                    if(channelId != 9){
+                        MIDI.programChange(channelId, event.programNumber, delay);
                     }
+                    break;
+                case 'pitchBend':
+                    MIDI.pitchBend(channelId, event.value, delay);
+                    break;
+                case 'noteOn':
+                    if (channel.mute) break;
+                    note = event.noteNumber - (midi.MIDIOffset || 0);
+                    var temp = {
+                        event: event,
+                        time: queueTime,
+                        source: MIDI.noteOn(channelId, event.noteNumber, event.velocity, delay),
+                        interval: scheduleTracking(channelId, note, queuedTime + midi.startDelay, offset - foffset, 144, event.velocity)
+                    };
+                    eventQueue.push(temp);
+                    messages++;
+                    break;
+                case 'noteOff':
+                    if (channel.mute) break;
+                    note = event.noteNumber - (midi.MIDIOffset || 0);
+                    eventQueue.push({
+                        event: event,
+                        time: queueTime,
+                        source: MIDI.noteOff(channelId, event.noteNumber, delay),
+                        interval: scheduleTracking(channelId, note, queuedTime, offset - foffset, 128, 0)
+                    });
+                    break;
+                default:
+                    break;
+            }
+        }
+        ///
+        onsuccess && onsuccess(eventQueue);
+    };
+
+    var stopAudio = function () {
+        var ctx = getContext();
+        midi.playing = false;
+        midi.restart += (ctx.currentTime - startTime) * 1000;
+        // stop the audio, and intervals
+        while (eventQueue.length) {
+            var o = eventQueue.pop();
+            window.clearInterval(o.interval);
+            if (!o.source) continue; // is not webaudio
+            if (typeof(o.source) === 'number') {
+                window.clearTimeout(o.source);
+            } else { // webaudio
+                o.source.disconnect(0);
+            }
+        }
+        // run callback to cancel any notes still playing
+        for (var key in noteRegistrar) {
+            var o = noteRegistrar[key]
+            if (noteRegistrar[key].message === 144 && onMidiEvent) {
+                onMidiEvent({
+                    channel: o.channel,
+                    note: o.note,
+                    now: o.now,
+                    end: o.end,
+                    message: 128,
+                    velocity: o.velocity
+                });
+            }
+        }
+        // reset noteRegistrar
+        noteRegistrar = {};
+    };
+
+    midi.setChannelVolume = function(val, channel){
+        MIDI.channels[channel].volume = val;
+        if(MIDI.api === "webaudio"){
+            for(var i = 0; i < eventQueue.length; i++){
+                var event = eventQueue[i];
+                if (event && event.source && typeof event.source.setChannelVolume === 'function' && event.source.channel === channel){
+                    event.source.setChannelVolume(val);
                 }
             }
         }
-
-        ///
-        opts.format = root.__audioFormat;
-        opts.instruments = instruments;
-        ///
-        root.midi = connect(root.__api, opts);
+    };
+    midi.setTrackVolume = function(val, track){
+        midi.setChannelVolume(val, midi.tracks[track]);
     };
 
-    var connect = function(api, opts){
-        switch(api) {
-            case 'webmidi':
-                // cant wait for this to be standardized!
-                root = _.merge(root, webMidi.connect(opts, root.channels));
-                break;
-            case 'audiotag':
-                // works ok, kinda like a drunken tuna fish, across the board
-                // http://caniuse.com/audio
-                requestQueue(opts, audiotag);
-                break;
-            case 'webaudio':
-                // works awesome! safari, chrome and firefox support
-                // http://caniuse.com/web-audio
-                requestQueue(opts, webaudio);
-                break;
-        }
-        root.__api = api;
-    };
-
-    var requestQueue = function (opts, context) {
-        var audioFormat = opts.format;
-        var instruments = opts.instruments;
-        var onprogress = opts.onprogress;
-        var onerror = opts.onerror;
-        ///
-        var length = instruments.length;
-        var pending = length;
-        var waitForEnd = function () {
-            if (!--pending) {
-                onprogress && onprogress('load', 1.0);
-                root =_.merge(root, context.connect(opts, root.channels));
-            }
-        };
-        ///
-        for (var i = 0; i < length; i++) {
-            var instrumentId = instruments[i];
-            if (window.MIDI.Soundfont[instrumentId]) { // already loaded
-                waitForEnd();
-            } else { // needs to be requested
-                sendRequest(instruments[i], audioFormat, function (evt, progress) {
-                    var fileProgress = progress / length;
-                    var queueProgress = (length - pending) / length;
-                    onprogress && onprogress('load', fileProgress + queueProgress, instrumentId);
-                }, function () {
-                    waitForEnd();
-                }, onerror);
-            }
-        };
-    };
-
-    var sendRequest = function (instrumentId, audioFormat, onprogress, onsuccess, onerror) {
-        var soundfontPath = root.soundfontUrl + instrumentId + '-' + audioFormat + '.js';
-        request({
-            url: soundfontPath,
-            format: 'text',
-            onerror: onerror,
-            onprogress: onprogress,
-            onsuccess: function (event, responseText) {
-                var script = document.createElement('script');
-                script.language = 'javascript';
-                script.type = 'text/javascript';
-                script.text = responseText;
-                document.body.appendChild(script);
-
-                ///
-                onsuccess();
-            }
-        });
-    };
-
-    root.setDefaultPlugin = function (midi) {
-        for (var key in midi) {
-            root[key] = midi[key];
-        }
-    };
-
-    return root;
+    return midi;
 };
