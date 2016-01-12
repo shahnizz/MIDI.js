@@ -14,6 +14,7 @@
   },
   "homepage": "https://github.com/musescore/MIDI.js#readme",
   "dependencies": {
+    "lodash.find": "^3.2.1",
     "lodash.merge": "^3.3.2",
     "tunajs": "^0.4.2",
     "web-midi-api": "^1.4.4"

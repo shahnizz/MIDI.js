@@ -69,10 +69,9 @@ midi.noteOn = function (channelId, noteId, velocity, delay) {
     var channel = channels[channelId];
     var instrument = channel.instrument;
     var bufferId = instrument + '' + noteId;
-
     var buffer = audioBuffers[bufferId];
     if (!buffer) {
-        console.log(generalMIDI.GM.byId[instrument].id, instrument, channelId);
+        console.log(generalMIDI.GM.byId(instrument).id, instrument, channelId);
         return;
     }
 
@@ -292,7 +291,7 @@ midi.setContext = function (newCtx, onload, onprogress, onerror) {
             continue;
         }
         ///
-        var synth = generalMIDI.GM.byName[instrument];
+        var synth = generalMIDI.GM.byCleanName(instrument);
         var instrumentId = synth.number;
         ///
         bufferPending[instrumentId] = 0;

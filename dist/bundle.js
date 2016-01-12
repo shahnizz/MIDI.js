@@ -64,6 +64,430 @@ module.exports = arrayEach;
 
 },{}],3:[function(require,module,exports){
 /**
+ * lodash 3.3.1 (Custom Build) <https://lodash.com/>
+ * Build: `lodash modern modularize exports="npm" -o ./`
+ * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <https://lodash.com/license>
+ */
+var baseIsEqual = require('lodash._baseisequal'),
+    bindCallback = require('lodash._bindcallback'),
+    isArray = require('lodash.isarray'),
+    pairs = require('lodash.pairs');
+
+/** Used to match property names within property paths. */
+var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\n\\]|\\.)*?\1)\]/,
+    reIsPlainProp = /^\w*$/,
+    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\n\\]|\\.)*?)\2)\]/g;
+
+/** Used to match backslashes in property paths. */
+var reEscapeChar = /\\(\\)?/g;
+
+/**
+ * Converts `value` to a string if it's not one. An empty string is returned
+ * for `null` or `undefined` values.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ */
+function baseToString(value) {
+  return value == null ? '' : (value + '');
+}
+
+/**
+ * The base implementation of `_.callback` which supports specifying the
+ * number of arguments to provide to `func`.
+ *
+ * @private
+ * @param {*} [func=_.identity] The value to convert to a callback.
+ * @param {*} [thisArg] The `this` binding of `func`.
+ * @param {number} [argCount] The number of arguments to provide to `func`.
+ * @returns {Function} Returns the callback.
+ */
+function baseCallback(func, thisArg, argCount) {
+  var type = typeof func;
+  if (type == 'function') {
+    return thisArg === undefined
+      ? func
+      : bindCallback(func, thisArg, argCount);
+  }
+  if (func == null) {
+    return identity;
+  }
+  if (type == 'object') {
+    return baseMatches(func);
+  }
+  return thisArg === undefined
+    ? property(func)
+    : baseMatchesProperty(func, thisArg);
+}
+
+/**
+ * The base implementation of `get` without support for string paths
+ * and default values.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Array} path The path of the property to get.
+ * @param {string} [pathKey] The key representation of path.
+ * @returns {*} Returns the resolved value.
+ */
+function baseGet(object, path, pathKey) {
+  if (object == null) {
+    return;
+  }
+  if (pathKey !== undefined && pathKey in toObject(object)) {
+    path = [pathKey];
+  }
+  var index = 0,
+      length = path.length;
+
+  while (object != null && index < length) {
+    object = object[path[index++]];
+  }
+  return (index && index == length) ? object : undefined;
+}
+
+/**
+ * The base implementation of `_.isMatch` without support for callback
+ * shorthands and `this` binding.
+ *
+ * @private
+ * @param {Object} object The object to inspect.
+ * @param {Array} matchData The propery names, values, and compare flags to match.
+ * @param {Function} [customizer] The function to customize comparing objects.
+ * @returns {boolean} Returns `true` if `object` is a match, else `false`.
+ */
+function baseIsMatch(object, matchData, customizer) {
+  var index = matchData.length,
+      length = index,
+      noCustomizer = !customizer;
+
+  if (object == null) {
+    return !length;
+  }
+  object = toObject(object);
+  while (index--) {
+    var data = matchData[index];
+    if ((noCustomizer && data[2])
+          ? data[1] !== object[data[0]]
+          : !(data[0] in object)
+        ) {
+      return false;
+    }
+  }
+  while (++index < length) {
+    data = matchData[index];
+    var key = data[0],
+        objValue = object[key],
+        srcValue = data[1];
+
+    if (noCustomizer && data[2]) {
+      if (objValue === undefined && !(key in object)) {
+        return false;
+      }
+    } else {
+      var result = customizer ? customizer(objValue, srcValue, key) : undefined;
+      if (!(result === undefined ? baseIsEqual(srcValue, objValue, customizer, true) : result)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+/**
+ * The base implementation of `_.matches` which does not clone `source`.
+ *
+ * @private
+ * @param {Object} source The object of property values to match.
+ * @returns {Function} Returns the new function.
+ */
+function baseMatches(source) {
+  var matchData = getMatchData(source);
+  if (matchData.length == 1 && matchData[0][2]) {
+    var key = matchData[0][0],
+        value = matchData[0][1];
+
+    return function(object) {
+      if (object == null) {
+        return false;
+      }
+      return object[key] === value && (value !== undefined || (key in toObject(object)));
+    };
+  }
+  return function(object) {
+    return baseIsMatch(object, matchData);
+  };
+}
+
+/**
+ * The base implementation of `_.matchesProperty` which does not clone `srcValue`.
+ *
+ * @private
+ * @param {string} path The path of the property to get.
+ * @param {*} srcValue The value to compare.
+ * @returns {Function} Returns the new function.
+ */
+function baseMatchesProperty(path, srcValue) {
+  var isArr = isArray(path),
+      isCommon = isKey(path) && isStrictComparable(srcValue),
+      pathKey = (path + '');
+
+  path = toPath(path);
+  return function(object) {
+    if (object == null) {
+      return false;
+    }
+    var key = pathKey;
+    object = toObject(object);
+    if ((isArr || !isCommon) && !(key in object)) {
+      object = path.length == 1 ? object : baseGet(object, baseSlice(path, 0, -1));
+      if (object == null) {
+        return false;
+      }
+      key = last(path);
+      object = toObject(object);
+    }
+    return object[key] === srcValue
+      ? (srcValue !== undefined || (key in object))
+      : baseIsEqual(srcValue, object[key], undefined, true);
+  };
+}
+
+/**
+ * The base implementation of `_.property` without support for deep paths.
+ *
+ * @private
+ * @param {string} key The key of the property to get.
+ * @returns {Function} Returns the new function.
+ */
+function baseProperty(key) {
+  return function(object) {
+    return object == null ? undefined : object[key];
+  };
+}
+
+/**
+ * A specialized version of `baseProperty` which supports deep paths.
+ *
+ * @private
+ * @param {Array|string} path The path of the property to get.
+ * @returns {Function} Returns the new function.
+ */
+function basePropertyDeep(path) {
+  var pathKey = (path + '');
+  path = toPath(path);
+  return function(object) {
+    return baseGet(object, path, pathKey);
+  };
+}
+
+/**
+ * The base implementation of `_.slice` without an iteratee call guard.
+ *
+ * @private
+ * @param {Array} array The array to slice.
+ * @param {number} [start=0] The start position.
+ * @param {number} [end=array.length] The end position.
+ * @returns {Array} Returns the slice of `array`.
+ */
+function baseSlice(array, start, end) {
+  var index = -1,
+      length = array.length;
+
+  start = start == null ? 0 : (+start || 0);
+  if (start < 0) {
+    start = -start > length ? 0 : (length + start);
+  }
+  end = (end === undefined || end > length) ? length : (+end || 0);
+  if (end < 0) {
+    end += length;
+  }
+  length = start > end ? 0 : ((end - start) >>> 0);
+  start >>>= 0;
+
+  var result = Array(length);
+  while (++index < length) {
+    result[index] = array[index + start];
+  }
+  return result;
+}
+
+/**
+ * Gets the propery names, values, and compare flags of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the match data of `object`.
+ */
+function getMatchData(object) {
+  var result = pairs(object),
+      length = result.length;
+
+  while (length--) {
+    result[length][2] = isStrictComparable(result[length][1]);
+  }
+  return result;
+}
+
+/**
+ * Checks if `value` is a property name and not a property path.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+ */
+function isKey(value, object) {
+  var type = typeof value;
+  if ((type == 'string' && reIsPlainProp.test(value)) || type == 'number') {
+    return true;
+  }
+  if (isArray(value)) {
+    return false;
+  }
+  var result = !reIsDeepProp.test(value);
+  return result || (object != null && value in toObject(object));
+}
+
+/**
+ * Checks if `value` is suitable for strict equality comparisons, i.e. `===`.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` if suitable for strict
+ *  equality comparisons, else `false`.
+ */
+function isStrictComparable(value) {
+  return value === value && !isObject(value);
+}
+
+/**
+ * Converts `value` to an object if it's not one.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {Object} Returns the object.
+ */
+function toObject(value) {
+  return isObject(value) ? value : Object(value);
+}
+
+/**
+ * Converts `value` to property path array if it's not one.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {Array} Returns the property path array.
+ */
+function toPath(value) {
+  if (isArray(value)) {
+    return value;
+  }
+  var result = [];
+  baseToString(value).replace(rePropName, function(match, number, quote, string) {
+    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+  });
+  return result;
+}
+
+/**
+ * Gets the last element of `array`.
+ *
+ * @static
+ * @memberOf _
+ * @category Array
+ * @param {Array} array The array to query.
+ * @returns {*} Returns the last element of `array`.
+ * @example
+ *
+ * _.last([1, 2, 3]);
+ * // => 3
+ */
+function last(array) {
+  var length = array ? array.length : 0;
+  return length ? array[length - 1] : undefined;
+}
+
+/**
+ * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
+ * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(1);
+ * // => false
+ */
+function isObject(value) {
+  // Avoid a V8 JIT bug in Chrome 19-20.
+  // See https://code.google.com/p/v8/issues/detail?id=2291 for more details.
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * This method returns the first argument provided to it.
+ *
+ * @static
+ * @memberOf _
+ * @category Utility
+ * @param {*} value Any value.
+ * @returns {*} Returns `value`.
+ * @example
+ *
+ * var object = { 'user': 'fred' };
+ *
+ * _.identity(object) === object;
+ * // => true
+ */
+function identity(value) {
+  return value;
+}
+
+/**
+ * Creates a function that returns the property value at `path` on a
+ * given object.
+ *
+ * @static
+ * @memberOf _
+ * @category Utility
+ * @param {Array|string} path The path of the property to get.
+ * @returns {Function} Returns the new function.
+ * @example
+ *
+ * var objects = [
+ *   { 'a': { 'b': { 'c': 2 } } },
+ *   { 'a': { 'b': { 'c': 1 } } }
+ * ];
+ *
+ * _.map(objects, _.property('a.b.c'));
+ * // => [2, 1]
+ *
+ * _.pluck(_.sortBy(objects, _.property(['a', 'b', 'c'])), 'a.b.c');
+ * // => [1, 2]
+ */
+function property(path) {
+  return isKey(path) ? baseProperty(path) : basePropertyDeep(path);
+}
+
+module.exports = baseCallback;
+
+},{"lodash._baseisequal":9,"lodash._bindcallback":10,"lodash.isarray":16,"lodash.pairs":22}],4:[function(require,module,exports){
+/**
  * lodash 3.0.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
  * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
@@ -96,7 +520,260 @@ function baseCopy(source, props, object) {
 
 module.exports = baseCopy;
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
+/**
+ * lodash 3.0.4 (Custom Build) <https://lodash.com/>
+ * Build: `lodash modern modularize exports="npm" -o ./`
+ * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <https://lodash.com/license>
+ */
+var keys = require('lodash.keys');
+
+/**
+ * Used as the [maximum length](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.max_safe_integer)
+ * of an array-like value.
+ */
+var MAX_SAFE_INTEGER = 9007199254740991;
+
+/**
+ * The base implementation of `_.forEach` without support for callback
+ * shorthands and `this` binding.
+ *
+ * @private
+ * @param {Array|Object|string} collection The collection to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array|Object|string} Returns `collection`.
+ */
+var baseEach = createBaseEach(baseForOwn);
+
+/**
+ * The base implementation of `baseForIn` and `baseForOwn` which iterates
+ * over `object` properties returned by `keysFunc` invoking `iteratee` for
+ * each property. Iteratee functions may exit iteration early by explicitly
+ * returning `false`.
+ *
+ * @private
+ * @param {Object} object The object to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @param {Function} keysFunc The function to get the keys of `object`.
+ * @returns {Object} Returns `object`.
+ */
+var baseFor = createBaseFor();
+
+/**
+ * The base implementation of `_.forOwn` without support for callback
+ * shorthands and `this` binding.
+ *
+ * @private
+ * @param {Object} object The object to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Object} Returns `object`.
+ */
+function baseForOwn(object, iteratee) {
+  return baseFor(object, iteratee, keys);
+}
+
+/**
+ * The base implementation of `_.property` without support for deep paths.
+ *
+ * @private
+ * @param {string} key The key of the property to get.
+ * @returns {Function} Returns the new function.
+ */
+function baseProperty(key) {
+  return function(object) {
+    return object == null ? undefined : object[key];
+  };
+}
+
+/**
+ * Creates a `baseEach` or `baseEachRight` function.
+ *
+ * @private
+ * @param {Function} eachFunc The function to iterate over a collection.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {Function} Returns the new base function.
+ */
+function createBaseEach(eachFunc, fromRight) {
+  return function(collection, iteratee) {
+    var length = collection ? getLength(collection) : 0;
+    if (!isLength(length)) {
+      return eachFunc(collection, iteratee);
+    }
+    var index = fromRight ? length : -1,
+        iterable = toObject(collection);
+
+    while ((fromRight ? index-- : ++index < length)) {
+      if (iteratee(iterable[index], index, iterable) === false) {
+        break;
+      }
+    }
+    return collection;
+  };
+}
+
+/**
+ * Creates a base function for `_.forIn` or `_.forInRight`.
+ *
+ * @private
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {Function} Returns the new base function.
+ */
+function createBaseFor(fromRight) {
+  return function(object, iteratee, keysFunc) {
+    var iterable = toObject(object),
+        props = keysFunc(object),
+        length = props.length,
+        index = fromRight ? length : -1;
+
+    while ((fromRight ? index-- : ++index < length)) {
+      var key = props[index];
+      if (iteratee(iterable[key], key, iterable) === false) {
+        break;
+      }
+    }
+    return object;
+  };
+}
+
+/**
+ * Gets the "length" property value of `object`.
+ *
+ * **Note:** This function is used to avoid a [JIT bug](https://bugs.webkit.org/show_bug.cgi?id=142792)
+ * that affects Safari on at least iOS 8.1-8.3 ARM64.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {*} Returns the "length" value.
+ */
+var getLength = baseProperty('length');
+
+/**
+ * Checks if `value` is a valid array-like length.
+ *
+ * **Note:** This function is based on [`ToLength`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength).
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ */
+function isLength(value) {
+  return typeof value == 'number' && value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+}
+
+/**
+ * Converts `value` to an object if it's not one.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {Object} Returns the object.
+ */
+function toObject(value) {
+  return isObject(value) ? value : Object(value);
+}
+
+/**
+ * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
+ * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(1);
+ * // => false
+ */
+function isObject(value) {
+  // Avoid a V8 JIT bug in Chrome 19-20.
+  // See https://code.google.com/p/v8/issues/detail?id=2291 for more details.
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+module.exports = baseEach;
+
+},{"lodash.keys":19}],6:[function(require,module,exports){
+/**
+ * lodash 3.0.0 (Custom Build) <https://lodash.com/>
+ * Build: `lodash modern modularize exports="npm" -o ./`
+ * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.7.0 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <https://lodash.com/license>
+ */
+
+/**
+ * The base implementation of `_.find`, `_.findLast`, `_.findKey`, and `_.findLastKey`,
+ * without support for callback shorthands and `this` binding, which iterates
+ * over `collection` using the provided `eachFunc`.
+ *
+ * @private
+ * @param {Array|Object|string} collection The collection to search.
+ * @param {Function} predicate The function invoked per iteration.
+ * @param {Function} eachFunc The function to iterate over `collection`.
+ * @param {boolean} [retKey] Specify returning the key of the found element
+ *  instead of the element itself.
+ * @returns {*} Returns the found element or its key, else `undefined`.
+ */
+function baseFind(collection, predicate, eachFunc, retKey) {
+  var result;
+  eachFunc(collection, function(value, key, collection) {
+    if (predicate(value, key, collection)) {
+      result = retKey ? key : value;
+      return false;
+    }
+  });
+  return result;
+}
+
+module.exports = baseFind;
+
+},{}],7:[function(require,module,exports){
+/**
+ * lodash 3.6.0 (Custom Build) <https://lodash.com/>
+ * Build: `lodash modern modularize exports="npm" -o ./`
+ * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.8.2 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <https://lodash.com/license>
+ */
+
+/**
+ * The base implementation of `_.findIndex` and `_.findLastIndex` without
+ * support for callback shorthands and `this` binding.
+ *
+ * @private
+ * @param {Array} array The array to search.
+ * @param {Function} predicate The function invoked per iteration.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function baseFindIndex(array, predicate, fromRight) {
+  var length = array.length,
+      index = fromRight ? length : -1;
+
+  while ((fromRight ? index-- : ++index < length)) {
+    if (predicate(array[index], index, array)) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+module.exports = baseFindIndex;
+
+},{}],8:[function(require,module,exports){
 /**
  * lodash 3.0.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -184,7 +861,351 @@ function isObject(value) {
 
 module.exports = baseFor;
 
-},{}],5:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
+/**
+ * lodash 3.0.7 (Custom Build) <https://lodash.com/>
+ * Build: `lodash modern modularize exports="npm" -o ./`
+ * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <https://lodash.com/license>
+ */
+var isArray = require('lodash.isarray'),
+    isTypedArray = require('lodash.istypedarray'),
+    keys = require('lodash.keys');
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]',
+    arrayTag = '[object Array]',
+    boolTag = '[object Boolean]',
+    dateTag = '[object Date]',
+    errorTag = '[object Error]',
+    numberTag = '[object Number]',
+    objectTag = '[object Object]',
+    regexpTag = '[object RegExp]',
+    stringTag = '[object String]';
+
+/**
+ * Checks if `value` is object-like.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/** Used for native method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the [`toStringTag`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-object.prototype.tostring)
+ * of values.
+ */
+var objToString = objectProto.toString;
+
+/**
+ * A specialized version of `_.some` for arrays without support for callback
+ * shorthands and `this` binding.
+ *
+ * @private
+ * @param {Array} array The array to iterate over.
+ * @param {Function} predicate The function invoked per iteration.
+ * @returns {boolean} Returns `true` if any element passes the predicate check,
+ *  else `false`.
+ */
+function arraySome(array, predicate) {
+  var index = -1,
+      length = array.length;
+
+  while (++index < length) {
+    if (predicate(array[index], index, array)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * The base implementation of `_.isEqual` without support for `this` binding
+ * `customizer` functions.
+ *
+ * @private
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @param {Function} [customizer] The function to customize comparing values.
+ * @param {boolean} [isLoose] Specify performing partial comparisons.
+ * @param {Array} [stackA] Tracks traversed `value` objects.
+ * @param {Array} [stackB] Tracks traversed `other` objects.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ */
+function baseIsEqual(value, other, customizer, isLoose, stackA, stackB) {
+  if (value === other) {
+    return true;
+  }
+  if (value == null || other == null || (!isObject(value) && !isObjectLike(other))) {
+    return value !== value && other !== other;
+  }
+  return baseIsEqualDeep(value, other, baseIsEqual, customizer, isLoose, stackA, stackB);
+}
+
+/**
+ * A specialized version of `baseIsEqual` for arrays and objects which performs
+ * deep comparisons and tracks traversed objects enabling objects with circular
+ * references to be compared.
+ *
+ * @private
+ * @param {Object} object The object to compare.
+ * @param {Object} other The other object to compare.
+ * @param {Function} equalFunc The function to determine equivalents of values.
+ * @param {Function} [customizer] The function to customize comparing objects.
+ * @param {boolean} [isLoose] Specify performing partial comparisons.
+ * @param {Array} [stackA=[]] Tracks traversed `value` objects.
+ * @param {Array} [stackB=[]] Tracks traversed `other` objects.
+ * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+ */
+function baseIsEqualDeep(object, other, equalFunc, customizer, isLoose, stackA, stackB) {
+  var objIsArr = isArray(object),
+      othIsArr = isArray(other),
+      objTag = arrayTag,
+      othTag = arrayTag;
+
+  if (!objIsArr) {
+    objTag = objToString.call(object);
+    if (objTag == argsTag) {
+      objTag = objectTag;
+    } else if (objTag != objectTag) {
+      objIsArr = isTypedArray(object);
+    }
+  }
+  if (!othIsArr) {
+    othTag = objToString.call(other);
+    if (othTag == argsTag) {
+      othTag = objectTag;
+    } else if (othTag != objectTag) {
+      othIsArr = isTypedArray(other);
+    }
+  }
+  var objIsObj = objTag == objectTag,
+      othIsObj = othTag == objectTag,
+      isSameTag = objTag == othTag;
+
+  if (isSameTag && !(objIsArr || objIsObj)) {
+    return equalByTag(object, other, objTag);
+  }
+  if (!isLoose) {
+    var objIsWrapped = objIsObj && hasOwnProperty.call(object, '__wrapped__'),
+        othIsWrapped = othIsObj && hasOwnProperty.call(other, '__wrapped__');
+
+    if (objIsWrapped || othIsWrapped) {
+      return equalFunc(objIsWrapped ? object.value() : object, othIsWrapped ? other.value() : other, customizer, isLoose, stackA, stackB);
+    }
+  }
+  if (!isSameTag) {
+    return false;
+  }
+  // Assume cyclic values are equal.
+  // For more information on detecting circular references see https://es5.github.io/#JO.
+  stackA || (stackA = []);
+  stackB || (stackB = []);
+
+  var length = stackA.length;
+  while (length--) {
+    if (stackA[length] == object) {
+      return stackB[length] == other;
+    }
+  }
+  // Add `object` and `other` to the stack of traversed objects.
+  stackA.push(object);
+  stackB.push(other);
+
+  var result = (objIsArr ? equalArrays : equalObjects)(object, other, equalFunc, customizer, isLoose, stackA, stackB);
+
+  stackA.pop();
+  stackB.pop();
+
+  return result;
+}
+
+/**
+ * A specialized version of `baseIsEqualDeep` for arrays with support for
+ * partial deep comparisons.
+ *
+ * @private
+ * @param {Array} array The array to compare.
+ * @param {Array} other The other array to compare.
+ * @param {Function} equalFunc The function to determine equivalents of values.
+ * @param {Function} [customizer] The function to customize comparing arrays.
+ * @param {boolean} [isLoose] Specify performing partial comparisons.
+ * @param {Array} [stackA] Tracks traversed `value` objects.
+ * @param {Array} [stackB] Tracks traversed `other` objects.
+ * @returns {boolean} Returns `true` if the arrays are equivalent, else `false`.
+ */
+function equalArrays(array, other, equalFunc, customizer, isLoose, stackA, stackB) {
+  var index = -1,
+      arrLength = array.length,
+      othLength = other.length;
+
+  if (arrLength != othLength && !(isLoose && othLength > arrLength)) {
+    return false;
+  }
+  // Ignore non-index properties.
+  while (++index < arrLength) {
+    var arrValue = array[index],
+        othValue = other[index],
+        result = customizer ? customizer(isLoose ? othValue : arrValue, isLoose ? arrValue : othValue, index) : undefined;
+
+    if (result !== undefined) {
+      if (result) {
+        continue;
+      }
+      return false;
+    }
+    // Recursively compare arrays (susceptible to call stack limits).
+    if (isLoose) {
+      if (!arraySome(other, function(othValue) {
+            return arrValue === othValue || equalFunc(arrValue, othValue, customizer, isLoose, stackA, stackB);
+          })) {
+        return false;
+      }
+    } else if (!(arrValue === othValue || equalFunc(arrValue, othValue, customizer, isLoose, stackA, stackB))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * A specialized version of `baseIsEqualDeep` for comparing objects of
+ * the same `toStringTag`.
+ *
+ * **Note:** This function only supports comparing values with tags of
+ * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
+ *
+ * @private
+ * @param {Object} value The object to compare.
+ * @param {Object} other The other object to compare.
+ * @param {string} tag The `toStringTag` of the objects to compare.
+ * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+ */
+function equalByTag(object, other, tag) {
+  switch (tag) {
+    case boolTag:
+    case dateTag:
+      // Coerce dates and booleans to numbers, dates to milliseconds and booleans
+      // to `1` or `0` treating invalid dates coerced to `NaN` as not equal.
+      return +object == +other;
+
+    case errorTag:
+      return object.name == other.name && object.message == other.message;
+
+    case numberTag:
+      // Treat `NaN` vs. `NaN` as equal.
+      return (object != +object)
+        ? other != +other
+        : object == +other;
+
+    case regexpTag:
+    case stringTag:
+      // Coerce regexes to strings and treat strings primitives and string
+      // objects as equal. See https://es5.github.io/#x15.10.6.4 for more details.
+      return object == (other + '');
+  }
+  return false;
+}
+
+/**
+ * A specialized version of `baseIsEqualDeep` for objects with support for
+ * partial deep comparisons.
+ *
+ * @private
+ * @param {Object} object The object to compare.
+ * @param {Object} other The other object to compare.
+ * @param {Function} equalFunc The function to determine equivalents of values.
+ * @param {Function} [customizer] The function to customize comparing values.
+ * @param {boolean} [isLoose] Specify performing partial comparisons.
+ * @param {Array} [stackA] Tracks traversed `value` objects.
+ * @param {Array} [stackB] Tracks traversed `other` objects.
+ * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
+ */
+function equalObjects(object, other, equalFunc, customizer, isLoose, stackA, stackB) {
+  var objProps = keys(object),
+      objLength = objProps.length,
+      othProps = keys(other),
+      othLength = othProps.length;
+
+  if (objLength != othLength && !isLoose) {
+    return false;
+  }
+  var index = objLength;
+  while (index--) {
+    var key = objProps[index];
+    if (!(isLoose ? key in other : hasOwnProperty.call(other, key))) {
+      return false;
+    }
+  }
+  var skipCtor = isLoose;
+  while (++index < objLength) {
+    key = objProps[index];
+    var objValue = object[key],
+        othValue = other[key],
+        result = customizer ? customizer(isLoose ? othValue : objValue, isLoose? objValue : othValue, key) : undefined;
+
+    // Recursively compare objects (susceptible to call stack limits).
+    if (!(result === undefined ? equalFunc(objValue, othValue, customizer, isLoose, stackA, stackB) : result)) {
+      return false;
+    }
+    skipCtor || (skipCtor = key == 'constructor');
+  }
+  if (!skipCtor) {
+    var objCtor = object.constructor,
+        othCtor = other.constructor;
+
+    // Non `Object` object instances with different constructors are not equal.
+    if (objCtor != othCtor &&
+        ('constructor' in object && 'constructor' in other) &&
+        !(typeof objCtor == 'function' && objCtor instanceof objCtor &&
+          typeof othCtor == 'function' && othCtor instanceof othCtor)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
+ * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(1);
+ * // => false
+ */
+function isObject(value) {
+  // Avoid a V8 JIT bug in Chrome 19-20.
+  // See https://code.google.com/p/v8/issues/detail?id=2291 for more details.
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+module.exports = baseIsEqual;
+
+},{"lodash.isarray":16,"lodash.istypedarray":18,"lodash.keys":19}],10:[function(require,module,exports){
 /**
  * lodash 3.0.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -251,7 +1272,7 @@ function identity(value) {
 
 module.exports = bindCallback;
 
-},{}],6:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /**
  * lodash 3.1.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -305,7 +1326,7 @@ function createAssigner(assigner) {
 
 module.exports = createAssigner;
 
-},{"lodash._bindcallback":5,"lodash._isiterateecall":8,"lodash.restparam":16}],7:[function(require,module,exports){
+},{"lodash._bindcallback":10,"lodash._isiterateecall":13,"lodash.restparam":23}],12:[function(require,module,exports){
 /**
  * lodash 3.9.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -444,7 +1465,7 @@ function isNative(value) {
 
 module.exports = getNative;
 
-},{}],8:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /**
  * lodash 3.0.9 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -578,7 +1599,95 @@ function isObject(value) {
 
 module.exports = isIterateeCall;
 
-},{}],9:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
+/**
+ * lodash 3.2.1 (Custom Build) <https://lodash.com/>
+ * Build: `lodash modern modularize exports="npm" -o ./`
+ * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <https://lodash.com/license>
+ */
+var baseCallback = require('lodash._basecallback'),
+    baseEach = require('lodash._baseeach'),
+    baseFind = require('lodash._basefind'),
+    baseFindIndex = require('lodash._basefindindex'),
+    isArray = require('lodash.isarray');
+
+/**
+ * Creates a `_.find` or `_.findLast` function.
+ *
+ * @private
+ * @param {Function} eachFunc The function to iterate over a collection.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {Function} Returns the new find function.
+ */
+function createFind(eachFunc, fromRight) {
+  return function(collection, predicate, thisArg) {
+    predicate = baseCallback(predicate, thisArg, 3);
+    if (isArray(collection)) {
+      var index = baseFindIndex(collection, predicate, fromRight);
+      return index > -1 ? collection[index] : undefined;
+    }
+    return baseFind(collection, predicate, eachFunc);
+  };
+}
+
+/**
+ * Iterates over elements of `collection`, returning the first element
+ * `predicate` returns truthy for. The predicate is bound to `thisArg` and
+ * invoked with three arguments: (value, index|key, collection).
+ *
+ * If a property name is provided for `predicate` the created `_.property`
+ * style callback returns the property value of the given element.
+ *
+ * If a value is also provided for `thisArg` the created `_.matchesProperty`
+ * style callback returns `true` for elements that have a matching property
+ * value, else `false`.
+ *
+ * If an object is provided for `predicate` the created `_.matches` style
+ * callback returns `true` for elements that have the properties of the given
+ * object, else `false`.
+ *
+ * @static
+ * @memberOf _
+ * @alias detect
+ * @category Collection
+ * @param {Array|Object|string} collection The collection to search.
+ * @param {Function|Object|string} [predicate=_.identity] The function invoked
+ *  per iteration.
+ * @param {*} [thisArg] The `this` binding of `predicate`.
+ * @returns {*} Returns the matched element, else `undefined`.
+ * @example
+ *
+ * var users = [
+ *   { 'user': 'barney',  'age': 36, 'active': true },
+ *   { 'user': 'fred',    'age': 40, 'active': false },
+ *   { 'user': 'pebbles', 'age': 1,  'active': true }
+ * ];
+ *
+ * _.result(_.find(users, function(chr) {
+ *   return chr.age < 40;
+ * }), 'user');
+ * // => 'barney'
+ *
+ * // using the `_.matches` callback shorthand
+ * _.result(_.find(users, { 'age': 1, 'active': true }), 'user');
+ * // => 'pebbles'
+ *
+ * // using the `_.matchesProperty` callback shorthand
+ * _.result(_.find(users, 'active', false), 'user');
+ * // => 'fred'
+ *
+ * // using the `_.property` callback shorthand
+ * _.result(_.find(users, 'active'), 'user');
+ * // => 'barney'
+ */
+var find = createFind(baseEach);
+
+module.exports = find;
+
+},{"lodash._basecallback":3,"lodash._baseeach":5,"lodash._basefind":6,"lodash._basefindindex":7,"lodash.isarray":16}],15:[function(require,module,exports){
 /**
  * lodash 3.0.4 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -686,7 +1795,7 @@ function isArguments(value) {
 
 module.exports = isArguments;
 
-},{}],10:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /**
  * lodash 3.0.4 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -868,7 +1977,7 @@ function isNative(value) {
 
 module.exports = isArray;
 
-},{}],11:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /**
  * lodash 3.2.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -973,7 +2082,7 @@ function isPlainObject(value) {
 
 module.exports = isPlainObject;
 
-},{"lodash._basefor":4,"lodash.isarguments":9,"lodash.keysin":14}],12:[function(require,module,exports){
+},{"lodash._basefor":8,"lodash.isarguments":15,"lodash.keysin":20}],18:[function(require,module,exports){
 /**
  * lodash 3.0.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -1085,7 +2194,7 @@ function isTypedArray(value) {
 
 module.exports = isTypedArray;
 
-},{}],13:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /**
  * lodash 3.1.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -1323,7 +2432,7 @@ function keysIn(object) {
 
 module.exports = keys;
 
-},{"lodash._getnative":7,"lodash.isarguments":9,"lodash.isarray":10}],14:[function(require,module,exports){
+},{"lodash._getnative":12,"lodash.isarguments":15,"lodash.isarray":16}],20:[function(require,module,exports){
 /**
  * lodash 3.0.8 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -1457,7 +2566,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"lodash.isarguments":9,"lodash.isarray":10}],15:[function(require,module,exports){
+},{"lodash.isarguments":15,"lodash.isarray":16}],21:[function(require,module,exports){
 /**
  * lodash 3.3.2 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -1725,7 +2834,87 @@ var merge = createAssigner(baseMerge);
 
 module.exports = merge;
 
-},{"lodash._arraycopy":1,"lodash._arrayeach":2,"lodash._createassigner":6,"lodash.isarguments":9,"lodash.isarray":10,"lodash.isplainobject":11,"lodash.istypedarray":12,"lodash.keys":13,"lodash.toplainobject":17}],16:[function(require,module,exports){
+},{"lodash._arraycopy":1,"lodash._arrayeach":2,"lodash._createassigner":11,"lodash.isarguments":15,"lodash.isarray":16,"lodash.isplainobject":17,"lodash.istypedarray":18,"lodash.keys":19,"lodash.toplainobject":24}],22:[function(require,module,exports){
+/**
+ * lodash 3.0.1 (Custom Build) <https://lodash.com/>
+ * Build: `lodash modern modularize exports="npm" -o ./`
+ * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Available under MIT license <https://lodash.com/license>
+ */
+var keys = require('lodash.keys');
+
+/**
+ * Converts `value` to an object if it's not one.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {Object} Returns the object.
+ */
+function toObject(value) {
+  return isObject(value) ? value : Object(value);
+}
+
+/**
+ * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
+ * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(1);
+ * // => false
+ */
+function isObject(value) {
+  // Avoid a V8 JIT bug in Chrome 19-20.
+  // See https://code.google.com/p/v8/issues/detail?id=2291 for more details.
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Creates a two dimensional array of the key-value pairs for `object`,
+ * e.g. `[[key1, value1], [key2, value2]]`.
+ *
+ * @static
+ * @memberOf _
+ * @category Object
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the new array of key-value pairs.
+ * @example
+ *
+ * _.pairs({ 'barney': 36, 'fred': 40 });
+ * // => [['barney', 36], ['fred', 40]] (iteration order is not guaranteed)
+ */
+function pairs(object) {
+  object = toObject(object);
+
+  var index = -1,
+      props = keys(object),
+      length = props.length,
+      result = Array(length);
+
+  while (++index < length) {
+    var key = props[index];
+    result[index] = [key, object[key]];
+  }
+  return result;
+}
+
+module.exports = pairs;
+
+},{"lodash.keys":19}],23:[function(require,module,exports){
 /**
  * lodash 3.6.1 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -1794,7 +2983,7 @@ function restParam(func, start) {
 
 module.exports = restParam;
 
-},{}],17:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * lodash 3.0.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash modern modularize exports="npm" -o ./`
@@ -1835,7 +3024,7 @@ function toPlainObject(value) {
 
 module.exports = toPlainObject;
 
-},{"lodash._basecopy":3,"lodash.keysin":14}],18:[function(require,module,exports){
+},{"lodash._basecopy":4,"lodash.keysin":20}],25:[function(require,module,exports){
 /*
     Copyright (c) 2012 DinahMoe AB & Oskar Eriksson
 
@@ -4018,11 +5207,215 @@ module.exports = toPlainObject;
     };
 })(this);
 
-},{}],19:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 (function (global){
 !function e(t,n,i){function s(a,r){if(!n[a]){if(!t[a]){var c="function"==typeof require&&require;if(!r&&c)return c(a,!0);if(o)return o(a,!0);var u=new Error("Cannot find module '"+a+"'");throw u.code="MODULE_NOT_FOUND",u}var f=n[a]={exports:{}};t[a][0].call(f.exports,function(e){var n=t[a][1][e];return s(n?n:e)},f,f.exports,e,t,n,i)}return n[a].exports}for(var o="function"==typeof require&&require,a=0;a<i.length;a++)s(i[a]);return s}({1:[function(e,t,n){function i(){f=!1,r.length?u=r.concat(u):l=-1,u.length&&s()}function s(){if(!f){var e=setTimeout(i);f=!0;for(var t=u.length;t;){for(r=u,u=[];++l<t;)r&&r[l].run();l=-1,t=u.length}r=null,f=!1,clearTimeout(e)}}function o(e,t){this.fun=e,this.array=t}function a(){}var r,c=t.exports={},u=[],f=!1,l=-1;c.nextTick=function(e){var t=new Array(arguments.length-1);if(arguments.length>1)for(var n=1;n<arguments.length;n++)t[n-1]=arguments[n];u.push(new o(e,t)),1!==u.length||f||setTimeout(s,0)},o.prototype.run=function(){this.fun.apply(null,this.array)},c.title="browser",c.browser=!0,c.env={},c.argv=[],c.version="",c.versions={},c.on=a,c.addListener=a,c.once=a,c.off=a,c.removeListener=a,c.removeAllListeners=a,c.emit=a,c.binding=function(e){throw new Error("process.binding is not supported")},c.cwd=function(){return"/"},c.chdir=function(e){throw new Error("process.chdir is not supported")},c.umask=function(){return 0}},{}],2:[function(e,t,n){"use strict";function i(e){var t="jazz_"+r++ +Date.now(),n=void 0,i=void 0,s=void 0;if(o.getDevice().nodejs===!0)i=new jazzMidi.MIDI;else{var u=document.createElement("object");u.id=t+"ie",u.classid="CLSID:1ACE1618-1C7D-4561-AEE1-34842AA85E90",s=u;var f=document.createElement("object");f.id=t,f.type="audio/x-jazz",u.appendChild(f),i=f;var l=document.createElement("p");l.appendChild(document.createTextNode("This page requires the "));var d=document.createElement("a");d.appendChild(document.createTextNode("Jazz plugin")),d.href="http://jazz-soft.net/",l.appendChild(d),l.appendChild(document.createTextNode(".")),f.appendChild(l);var h=document.getElementById("MIDIPlugin");h||(h=document.createElement("div"),h.id="MIDIPlugin",h.style.position="absolute",h.style.visibility="hidden",h.style.left="-9999px",h.style.top="-9999px",document.body.appendChild(h)),h.appendChild(u)}setTimeout(function(){i.isJazz===!0?n=i:s.isJazz===!0&&(n=s),void 0!==n&&(n._perfTimeZero=performance.now(),c.set(t,n)),e(n)},a)}function s(e,t){var n=null,s="input"===e?"inputInUse":"outputInUse",o=!0,a=!1,r=void 0;try{for(var u,f=c.values()[Symbol.iterator]();!(o=(u=f.next()).done);o=!0){var l=u.value;if(l[s]!==!0){n=l;break}}}catch(d){a=!0,r=d}finally{try{!o&&f["return"]&&f["return"]()}finally{if(a)throw r}}null===n?i(t):t(n)}Object.defineProperty(n,"__esModule",{value:!0}),n.createJazzInstance=i,n.getJazzInstance=s;var o=e("./util"),a=100,r=0,c=new Map},{"./util":9}],3:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}function s(){return new Promise(function(e,t){return void 0!==I?void e(I):"ie9"===y.getDevice().browser?void t({message:"WebMIDIAPIShim supports Internet Explorer 10 and above."}):void v.createJazzInstance(function(n){return void 0===n?void t({message:"No access to MIDI devices: browser does not support the WebMIDI API and the Jazz plugin is not installed."}):(_=n,void o(function(){u(),I=new D(w,b),e(I)}))})})}function o(e){var t=_.MidiInList(),n=_.MidiOutList(),i=t.length,s=n.length;a(0,i,"input",t,function(){a(0,s,"output",n,e)})}function a(e,t,n,i,s){if(t>e){var o=i[e++];r(n,o,function(){a(e,t,n,i,s)})}else s()}function r(e,t,n){v.getJazzInstance(e,function(i){var s=void 0,o=[t,"",""];"input"===e?(i.Support("MidiInInfo")&&(o=i.MidiInInfo(t)),s=new p.MIDIInput(o,i),w.set(s.id,s)):"output"===e&&(i.Support("MidiOutInfo")&&(o=i.MidiOutInfo(t)),s=new m.MIDIOutput(o,i),b.set(s.id,s)),n(s)})}function c(e,t){var n=void 0,i=!0,s=!1,o=void 0;try{for(var a,r=e.values()[Symbol.iterator]();!(i=(a=r.next()).done)&&(n=a.value,n.name!==t);i=!0);}catch(c){s=!0,o=c}finally{try{!i&&r["return"]&&r["return"]()}finally{if(s)throw o}}return n}function u(){_.OnDisconnectMidiIn(function(e){var t=c(w,e);void 0!==t&&(t.state="disconnected",t.close(),t._jazzInstance.inputInUse=!1,w["delete"](t.id),f(t))}),_.OnDisconnectMidiOut(function(e){var t=c(b,e);void 0!==t&&(t.state="disconnected",t.close(),t._jazzInstance.outputInUse=!1,b["delete"](t.id),f(t))}),_.OnConnectMidiIn(function(e){r("input",e,function(e){f(e)})}),_.OnConnectMidiOut(function(e){r("output",e,function(e){f(e)})})}function f(e){e.dispatchEvent(new g.MIDIConnectionEvent(e,e));var t=new g.MIDIConnectionEvent(I,e);"function"==typeof I.onstatechange&&I.onstatechange(t);var n=!0,i=!1,s=void 0;try{for(var o,a=z[Symbol.iterator]();!(n=(o=a.next()).done);n=!0){var r=o.value;r(t)}}catch(c){i=!0,s=c}finally{try{!n&&a["return"]&&a["return"]()}finally{if(i)throw s}}}function l(){w.forEach(function(e){e._jazzInstance.MidiInClose()})}function d(e,t){var n=void 0;return"input"===t?(n=M.get(e),void 0===n&&(n=y.generateUUID(),M.set(e,n))):"output"===t&&(n=x.get(e),void 0===n&&(n=y.generateUUID(),x.set(e,n))),n}Object.defineProperty(n,"__esModule",{value:!0});var h=function(){function e(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(t,n,i){return n&&e(t.prototype,n),i&&e(t,i),t}}();n.createMIDIAccess=s,n.dispatchEvent=f,n.closeAllMIDIInputs=l,n.getMIDIDeviceId=d;var v=e("./jazz_instance"),p=e("./midi_input"),m=e("./midi_output"),g=e("./midiconnection_event"),y=e("./util"),I=void 0,_=void 0,w=new Map,b=new Map,M=new Map,x=new Map,z=new Set,D=function(){function e(t,n){i(this,e),this.sysexEnabled=!0,this.inputs=t,this.outputs=n}return h(e,[{key:"addEventListener",value:function(e,t,n){"statechange"===e&&z.has(t)===!1&&z.add(t)}},{key:"removeEventListener",value:function(e,t,n){"statechange"===e&&z.has(t)===!0&&z["delete"](t)}}]),e}()},{"./jazz_instance":2,"./midi_input":4,"./midi_output":5,"./midiconnection_event":6,"./util":9}],4:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function(){function e(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(t,n,i){return n&&e(t.prototype,n),i&&e(t,i),t}}(),o=e("./util"),a=e("./midimessage_event"),r=(e("./midiconnection_event"),e("./midi_access")),c=void 0,u=o.getDevice().nodejs,f=function(){function e(t,n){i(this,e),this.id=r.getMIDIDeviceId(t[0],"input"),this.name=t[0],this.manufacturer=t[1],this.version=t[2],this.type="input",this.state="connected",this.connection="pending",this.onstatechange=null,this._onmidimessage=null,Object.defineProperty(this,"onmidimessage",{set:function(e){this._onmidimessage=e,"function"==typeof e&&this.open()}}),this._listeners=(new Map).set("midimessage",new Set).set("statechange",new Set),this._inLongSysexMessage=!1,this._sysexBuffer=new Uint8Array,this._jazzInstance=n,this._jazzInstance.inputInUse=!0,"linux"===o.getDevice().platform&&this._jazzInstance.MidiInOpen(this.name,c.bind(this))}return s(e,[{key:"addEventListener",value:function(e,t,n){var i=this._listeners.get(e);void 0!==i&&i.has(t)===!1&&i.add(t)}},{key:"removeEventListener",value:function(e,t,n){var i=this._listeners.get(e);void 0!==i&&i.has(t)===!1&&i["delete"](t)}},{key:"dispatchEvent",value:function(e){var t=this._listeners.get(e.type);t.forEach(function(t){t(e)}),"midimessage"===e.type?null!==this._onmidimessage&&this._onmidimessage(e):"statechange"===e.type&&null!==this.onstatechange&&this.onstatechange(e)}},{key:"open",value:function(){"open"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiInOpen(this.name,c.bind(this)),this.connection="open",r.dispatchEvent(this))}},{key:"close",value:function(){"closed"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiInClose(),this.connection="closed",r.dispatchEvent(this),this._onmidimessage=null,this.onstatechange=null,this._listeners.get("midimessage").clear(),this._listeners.get("statechange").clear())}},{key:"_appendToSysexBuffer",value:function(e){var t=this._sysexBuffer.length,n=new Uint8Array(t+e.length);n.set(this._sysexBuffer),n.set(e,t),this._sysexBuffer=n}},{key:"_bufferLongSysex",value:function(e,t){for(var n=t;n<e.length;){if(247==e[n])return n++,this._appendToSysexBuffer(e.slice(t,n)),n;n++}return this._appendToSysexBuffer(e.slice(t,n)),this._inLongSysexMessage=!0,n}}]),e}();n.MIDIInput=f,c=function(e,t){var n=0,i=void 0,s=!1;for(i=0;i<t.length;i+=n){var o=!0;if(this._inLongSysexMessage){if(i=this._bufferLongSysex(t,i),247!=t[i-1])return;s=!0}else switch(s=!1,240&t[i]){case 0:n=1,o=!1;break;case 128:case 144:case 160:case 176:case 224:n=3;break;case 192:case 208:n=2;break;case 240:switch(t[i]){case 240:if(i=this._bufferLongSysex(t,i),247!=t[i-1])return;s=!0;break;case 241:case 243:n=2;break;case 242:n=3;break;default:n=1}}if(o){var r={};if(r.receivedTime=parseFloat(e.toString())+this._jazzInstance._perfTimeZero,s||this._inLongSysexMessage?(r.data=new Uint8Array(this._sysexBuffer),this._sysexBuffer=new Uint8Array(0),this._inLongSysexMessage=!1):r.data=new Uint8Array(t.slice(i,n+i)),u)this._onmidimessage&&this._onmidimessage(r);else{var c=new a.MIDIMessageEvent(this,r.data,r.receivedTime);this.dispatchEvent(c)}}}}},{"./midi_access":3,"./midiconnection_event":6,"./midimessage_event":7,"./util":9}],5:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function(){function e(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(t,n,i){return n&&e(t.prototype,n),i&&e(t,i),t}}(),o=e("./util"),a=e("./midi_access"),r=function(){function e(t,n){i(this,e),this.id=a.getMIDIDeviceId(t[0],"output"),this.name=t[0],this.manufacturer=t[1],this.version=t[2],this.type="output",this.state="connected",this.connection="pending",this.onmidimessage=null,this.onstatechange=null,this._listeners=new Set,this._inLongSysexMessage=!1,this._sysexBuffer=new Uint8Array,this._jazzInstance=n,this._jazzInstance.outputInUse=!0,"linux"===o.getDevice().platform&&this._jazzInstance.MidiOutOpen(this.name)}return s(e,[{key:"open",value:function(){"open"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiOutOpen(this.name),this.connection="open",a.dispatchEvent(this))}},{key:"close",value:function(){"closed"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiOutClose(),this.connection="closed",a.dispatchEvent(this),this.onstatechange=null,this._listeners.clear())}},{key:"send",value:function(e,t){var n=this,i=0;return 0===e.length?!1:(t&&(i=Math.floor(t-performance.now())),t&&i>1?setTimeout(function(){n._jazzInstance.MidiOutLong(e)},i):this._jazzInstance.MidiOutLong(e),!0)}},{key:"clear",value:function(){}},{key:"addEventListener",value:function(e,t,n){"statechange"===e&&this._listeners.has(t)===!1&&this._listeners.add(t)}},{key:"removeEventListener",value:function(e,t,n){"statechange"===e&&this._listeners.has(t)===!1&&this._listeners["delete"](t)}},{key:"dispatchEvent",value:function(e){this._listeners.forEach(function(t){t(e)}),null!==this.onstatechange&&this.onstatechange(e)}}]),e}();n.MIDIOutput=r},{"./midi_access":3,"./util":9}],6:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function o(e,t){i(this,o),this.bubbles=!1,this.cancelBubble=!1,this.cancelable=!1,this.currentTarget=e,this.defaultPrevented=!1,this.eventPhase=0,this.path=[],this.port=t,this.returnValue=!0,this.srcElement=e,this.target=e,this.timeStamp=Date.now(),this.type="statechange"};n.MIDIConnectionEvent=s},{}],7:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function o(e,t,n){i(this,o),this.bubbles=!1,this.cancelBubble=!1,this.cancelable=!1,this.currentTarget=e,this.data=t,this.defaultPrevented=!1,this.eventPhase=0,this.path=[],this.receivedTime=n,this.returnValue=!0,this.srcElement=e,this.target=e,this.timeStamp=Date.now(),this.type="midimessage"};n.MIDIMessageEvent=s},{}],8:[function(e,t,n){"use strict";var i=e("./midi_access"),s=e("./util"),o=void 0;!function(){navigator.requestMIDIAccess||(s.polyfill(),navigator.requestMIDIAccess=function(){return void 0===o&&(o=i.createMIDIAccess()),o},s.getDevice().nodejs===!0&&(navigator.close=function(){i.closeAllMIDIInputs()}))}()},{"./midi_access":3,"./util":9}],9:[function(e,t,n){(function(e,t){"use strict";function i(){if(void 0!==c)return c;var t="undetected",n="undetected";if(navigator.nodejs)return t=e.platform,c={platform:t,nodejs:!0,mobile:"ios"===t||"android"===t};var i=navigator.userAgent;return i.match(/(iPad|iPhone|iPod)/g)?t="ios":-1!==i.indexOf("Android")?t="android":-1!==i.indexOf("Linux")?t="linux":-1!==i.indexOf("Macintosh")?t="osx":-1!==i.indexOf("Windows")&&(t="windows"),-1!==i.indexOf("Chrome")?(n="chrome",-1!==i.indexOf("OPR")?n="opera":-1!==i.indexOf("Chromium")&&(n="chromium")):-1!==i.indexOf("Safari")?n="safari":-1!==i.indexOf("Firefox")?n="firefox":-1!==i.indexOf("Trident")&&(n="ie",-1!==i.indexOf("MSIE 9")&&(n="ie9")),"ios"===t&&-1!==i.indexOf("CriOS")&&(n="chrome"),c={platform:t,browser:n,mobile:"ios"===t||"android"===t,nodejs:!1}}function s(){void 0===performance&&(performance={}),Date.now=Date.now||function(){return(new Date).getTime()},void 0===performance.now&&!function(){var e=Date.now();void 0!==performance.timing&&void 0!==performance.timing.navigationStart&&(e=performance.timing.navigationStart),performance.now=function(){return Date.now()-e}}()}function o(){var e=(new Date).getTime(),t=new Array(64).join("x");return t=t.replace(/[xy]/g,function(t){var n=(e+16*Math.random())%16|0;return e=Math.floor(e/16),("x"==t?n:3&n|8).toString(16).toUpperCase()})}function a(e){"function"!=typeof e.Promise&&(e.Promise=function(e){this.executor=e},e.Promise.prototype.then=function(e,t){"function"!=typeof e&&(e=function(){}),"function"!=typeof t&&(t=function(){}),this.executor(e,t)})}function r(){var e=i();"ie"===e.browser?a(window):e.nodejs===!0&&a(t),s()}Object.defineProperty(n,"__esModule",{value:!0}),n.getDevice=i,n.polyfillPerformance=s,n.generateUUID=o,n.polyfillPromise=a,n.polyfill=r;var c=void 0}).call(this,e("_process"),"undefined"!=typeof global?global:"undefined"!=typeof self?self:"undefined"!=typeof window?window:{})},{_process:1}]},{},[8]);
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],20:[function(require,module,exports){
+
+},{}],27:[function(require,module,exports){
+module.exports={
+  "Piano": {
+    "Acoustic Grand Piano": 0,
+    "Bright Acoustic Piano": 1,
+    "Electric Grand Piano": 2,
+    "Honky-tonk Piano": 3,
+    "Electric Piano 1": 4,
+    "Electric Piano 2": 5,
+    "Harpsichord":6,
+    "Clavinet": 7
+  },
+  "Chromatic Percussion": {
+    "Celesta": 8,
+    "Glockenspiel": 9,
+    "Music Box": 10,
+    "Vibraphone": 11,
+    "Marimba": 12,
+    "Xylophone": 13,
+    "Tubular Bells": 14,
+    "Dulcimer": 15
+  },
+  "Organ": {
+    "Drawbar Organ": 16,
+    "Percussive Organ": 17,
+    "Rock Organ": 18,
+    "Church Organ": 19,
+    "Reed Organ": 20,
+    "Accordion": 21,
+    "Harmonica": 22,
+    "Tango Accordion": 23
+  },
+  "Guitar": {
+    "Acoustic Guitar (nylon)": 24,
+    "Acoustic Guitar (steel)": 25,
+    "Electric Guitar (jazz)": 26,
+    "Electric Guitar (clean)": 27,
+    "Electric Guitar (muted)": 28,
+    "Overdriven Guitar": 29,
+    "Distortion Guitar": 30,
+    "Guitar Harmonics": 31
+  },
+  "Bass": {
+    "Acoustic Bass": 32,
+    "Electric Bass (finger)": 33,
+    "Electric Bass (pick)": 34,
+    "Fretless Bass": 35,
+    "Slap Bass 1": 36,
+    "Slap Bass 2": 37,
+    "Synth Bass 1": 38,
+    "Synth Bass 2": 39
+  },
+  "Strings": {
+    "Violin": 40,
+    "Viola": 41,
+    "Cello": 42,
+    "Contrabass": 43,
+    "Tremolo Strings": 44,
+    "Pizzicato Strings": 45,
+    "Orchestral Harp": 46,
+    "Timpani": 47
+  },
+  "Brass": {
+    "Trumpet": 56,
+    "Trombone": 57,
+    "Tuba": 58,
+    "Muted Trumpet": 59,
+    "French Horn": 60,
+    "Brass Section": 61,
+    "Synth Brass 1": 62,
+    "Synth Brass 2": 63
+  },
+  "Reed": {
+    "Soprano Sax": 64,
+    "Alto Sax": 65,
+    "Tenor Sax": 66,
+    "Baritone Sax": 67,
+    "Oboe": 68,
+    "English Horn": 69,
+    "Bassoon": 70,
+    "Clarinet": 71
+  },
+  "Pipe": {
+    "Piccolo": 72,
+    "Flute": 73,
+    "Recorder": 74,
+    "Pan Flute": 75,
+    "Blown Bottle": 76,
+    "Shakuhachi": 77,
+    "Whistle": 78,
+    "Ocarina": 79
+  },
+  "Synth Lead": {
+    "Lead 1 (square)": 80,
+    "Lead 2 (sawtooth)": 81,
+    "Lead 3 (calliope)": 82,
+    "Lead 4 (chiff)": 83,
+    "Lead 5 (charang)": 84,
+    "Lead 6 (voice)": 85,
+    "Lead 7 (fifths)": 86,
+    "Lead 8 (bass + lead)": 87
+  },
+  "Synth Pad": {
+    "Pad 1 (new age)": 88,
+    "Pad 2 (warm)": 89,
+    "Pad 3 (polysynth)": 90,
+    "Pad 4 (choir)": 91,
+    "Pad 5 (bowed)": 92,
+    "Pad 6 (metallic)": 93,
+    "Pad 7 (halo)": 94,
+    "Pad 8 (sweep)": 95
+  },
+  "Synth Effects": {
+    "FX 1 (rain)": 96,
+    "FX 2 (soundtrack)": 97,
+    "FX 3 (crystal)": 98,
+    "FX 4 (atmosphere)": 99,
+    "FX 5 (brightness)": 100,
+    "FX 6 (goblins)": 101,
+    "FX 7 (echoes)": 102,
+    "FX 8 (sci-fi)": 103
+  },
+  "Ethnic": {
+    "Sitar": 104,
+    "Banjo": 105,
+    "Shamisen": 106,
+    "Koto": 107,
+    "Kalimba": 108,
+    "Bagpipe": 109,
+    "Fiddle": 110,
+    "Shanai": 111
+  },
+  "Percussive": {
+    "Tinkle Bell": 112,
+    "Agogo": 113,
+    "Steel Drums": 114,
+    "Woodblock": 115,
+    "Taiko Drum": 116,
+    "Melodic Tom": 117,
+    "Synth Drum": 118
+  },
+  "Sound effects": {
+    "Reverse Cymbal": 119,
+    "Guitar Fret Noise": 120,
+    "Breath Noise": 121,
+    "Seashore": 122,
+    "Bird Tweet": 123,
+    "Telephone Ring": 124,
+    "Helicopter": 125,
+    "Applause": 126,
+    "Gunshot": 127
+  },
+  "Percussion": {
+    "Bass Drum 2": 35,
+    "Bass Drum 1": 36,
+    "Side Stick/Rimshot": 37,
+    "Snare Drum 1": 38,
+    "Hand Clap": 39,
+    "Snare Drum 2": 40,
+    "Low Tom 2": 41,
+    "Closed Hi-hat": 42,
+    "Low Tom 1": 43,
+    "Pedal Hi-hat": 44,
+    "Mid Tom 2": 45,
+    "Open Hi-hat": 46,
+    "Mid Tom 1": 47,
+    "High Tom 2": 48,
+    "Crash Cymbal 1": 49,
+    "High Tom 1": 50,
+    "Ride Cymbal 1": 51,
+    "Chinese Cymbal": 52,
+    "Ride Bell": 53,
+    "Tambourine": 54,
+    "Splash Cymbal": 55,
+    "Cowbell": 56,
+    "Crash Cymbal 2": 57,
+    "Vibra Slap": 58,
+    "Ride Cymbal 2": 59,
+    "High Bongo": 60,
+    "Low Bongo": 61,
+    "Mute High Conga": 62,
+    "Open High Conga": 63,
+    "Low Conga": 64,
+    "High Timbale": 65,
+    "Low Timbale": 66,
+    "High Agogô": 67,
+    "Low Agogô": 68,
+    "Cabasa": 69,
+    "Maracas": 70,
+    "Short Whistle": 71,
+    "Long Whistle": 72,
+    "Short Güiro": 73,
+    "Long Güiro": 74,
+    "Claves": 75,
+    "High Wood Block": 76,
+    "Low Wood Block": 77,
+    "Mute Cuíca": 78,
+    "Open Cuíca": 79,
+    "Mute Triangle": 80,
+    "Open Triangle": 81
+  }
+}
+
+},{}],28:[function(require,module,exports){
 /*
 class to parse the .mid file format
 (depends on stream.js)
@@ -4263,7 +5656,7 @@ module.exports = function (data) {
 		'tracks': tracks
 	}
 };
-},{"./stream":22}],21:[function(require,module,exports){
+},{"./stream":30}],29:[function(require,module,exports){
 var clone = function (o) {
 	if (typeof o != 'object') return (o);
 	if (o == null) return (o);
@@ -4368,7 +5761,7 @@ module.exports = function (midiFile, timeWarp, eventProcessor, bpm) {
 	};
 };
 
-},{}],22:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /* Wrapper for accessing strings through sequential reads */
 module.exports = function (str) {
     var position = 0;
@@ -4438,7 +5831,7 @@ module.exports = function (str) {
         'readVarInt': readVarInt
     }
 };
-},{}],23:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /**
  * @license -------------------------------------------------------------------
  *   module: Base64Binary
@@ -4520,7 +5913,7 @@ module.exports = {
 		return uarray;	
 	}
 };
-},{}],24:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var midi = function () {
     var api = {};
     var loader = require('./midi/loader')();
@@ -4530,7 +5923,7 @@ var midi = function () {
 
 module.exports = midi;
 window.globalmidi = midi;
-},{"./midi/loader":27,"./midi/player":28}],25:[function(require,module,exports){
+},{"./midi/loader":35,"./midi/player":36}],33:[function(require,module,exports){
 /*
 	----------------------------------------------------------
 	MIDI.audioDetect : 0.3.2 : 2015-03-26
@@ -4627,61 +6020,93 @@ var audioDetect = function(onsuccess) {
 };
 
 module.exports = audioDetect;
-},{}],26:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /*
  ----------------------------------------------------------
  GeneralMIDI
  ----------------------------------------------------------
  */
-var root = {};3
-/**
- * todo: way to clever code, needs to be simplified
- */
-root.GM = (function (arr) {
+var root = {};
+var _ = {
+    find: require('lodash.find')
+};
+root.GM = (function () {
+    var instruments = require('../instruments.json');
+
     var clean = function (name) {
         return name.replace(/[^a-z0-9 ]/gi, '').replace(/[ ]/g, '_').toLowerCase();
     };
+
     var res = {
-        byName: {},
-        byId: {},
-        byCategory: {}
-    };
-    for (var key in arr) {
-        var list = arr[key];
-        for (var n = 0, length = list.length; n < length; n++) {
-            var instrument = list[n];
-            if (!instrument) continue;
-            var num = parseInt(instrument.substr(0, instrument.indexOf(' ')), 10);
-            instrument = instrument.replace(num + ' ', '');
-            res.byId[--num] =
-                res.byName[clean(instrument)] =
-                    res.byCategory[clean(key)] = {
-                        id: clean(instrument),
-                        instrument: instrument,
-                        number: num,
-                        category: key
-                    };
+        byId: function(id){
+            var ins;
+            _.find(instruments, function(categorie, key){
+                var result = _.find(categorie, function(instrument, key){
+                    if(instrument == id){
+                        ins = {};
+                        ins.instrument = key;
+                        ins.number = instrument;
+                        ins.id = clean(key);
+                        return true;
+                    }
+                });
+                if(result){
+                    ins.category = key;
+                    return true;
+                }
+            });
+
+            return ins;
+        },
+        byName: function(name){
+            var ins;
+            _.find(instruments, function(categorie, key){
+                var result = _.find(categorie, function(instrument, key){
+                    if(name == key){
+                        ins = {};
+                        ins.instrument = key;
+                        ins.number = instrument;
+                        ins.id = clean(key);
+                        return true;
+                    }
+                });
+                if(result){
+                    ins.category = key;
+                    return true;
+                }
+            });
+
+            return ins;
+        },
+        byCleanName: function(name){
+            var ins;
+            _.find(instruments, function(categorie, key){
+                var result = _.find(categorie, function(instrument, key){
+                    if(name == clean(key)){
+                        ins = {};
+                        ins.instrument = key;
+                        ins.number = instrument;
+                        ins.id = clean(key);
+                        return true;
+                    }
+                });
+                if(result){
+                    ins.category = key;
+                    return true;
+                }
+            });
+
+            return ins;
+        },
+        byCategory: function(cat){
+            return _.find(instruments, function(categorie, key){
+                return cat == key;
+            })
         }
-    }
+    };
+
     return res;
-})({
-    'Piano': ['1 Acoustic Grand Piano', '2 Bright Acoustic Piano', '3 Electric Grand Piano', '4 Honky-tonk Piano', '5 Electric Piano 1', '6 Electric Piano 2', '7 Harpsichord', '8 Clavinet'],
-    'Chromatic Percussion': ['9 Celesta', '10 Glockenspiel', '11 Music Box', '12 Vibraphone', '13 Marimba', '14 Xylophone', '15 Tubular Bells', '16 Dulcimer'],
-    'Organ': ['17 Drawbar Organ', '18 Percussive Organ', '19 Rock Organ', '20 Church Organ', '21 Reed Organ', '22 Accordion', '23 Harmonica', '24 Tango Accordion'],
-    'Guitar': ['25 Acoustic Guitar (nylon)', '26 Acoustic Guitar (steel)', '27 Electric Guitar (jazz)', '28 Electric Guitar (clean)', '29 Electric Guitar (muted)', '30 Overdriven Guitar', '31 Distortion Guitar', '32 Guitar Harmonics'],
-    'Bass': ['33 Acoustic Bass', '34 Electric Bass (finger)', '35 Electric Bass (pick)', '36 Fretless Bass', '37 Slap Bass 1', '38 Slap Bass 2', '39 Synth Bass 1', '40 Synth Bass 2'],
-    'Strings': ['41 Violin', '42 Viola', '43 Cello', '44 Contrabass', '45 Tremolo Strings', '46 Pizzicato Strings', '47 Orchestral Harp', '48 Timpani'],
-    'Ensemble': ['49 String Ensemble 1', '50 String Ensemble 2', '51 Synth Strings 1', '52 Synth Strings 2', '53 Choir Aahs', '54 Voice Oohs', '55 Synth Choir', '56 Orchestra Hit'],
-    'Brass': ['57 Trumpet', '58 Trombone', '59 Tuba', '60 Muted Trumpet', '61 French Horn', '62 Brass Section', '63 Synth Brass 1', '64 Synth Brass 2'],
-    'Reed': ['65 Soprano Sax', '66 Alto Sax', '67 Tenor Sax', '68 Baritone Sax', '69 Oboe', '70 English Horn', '71 Bassoon', '72 Clarinet'],
-    'Pipe': ['73 Piccolo', '74 Flute', '75 Recorder', '76 Pan Flute', '77 Blown Bottle', '78 Shakuhachi', '79 Whistle', '80 Ocarina'],
-    'Synth Lead': ['81 Lead 1 (square)', '82 Lead 2 (sawtooth)', '83 Lead 3 (calliope)', '84 Lead 4 (chiff)', '85 Lead 5 (charang)', '86 Lead 6 (voice)', '87 Lead 7 (fifths)', '88 Lead 8 (bass + lead)'],
-    'Synth Pad': ['89 Pad 1 (new age)', '90 Pad 2 (warm)', '91 Pad 3 (polysynth)', '92 Pad 4 (choir)', '93 Pad 5 (bowed)', '94 Pad 6 (metallic)', '95 Pad 7 (halo)', '96 Pad 8 (sweep)'],
-    'Synth Effects': ['97 FX 1 (rain)', '98 FX 2 (soundtrack)', '99 FX 3 (crystal)', '100 FX 4 (atmosphere)', '101 FX 5 (brightness)', '102 FX 6 (goblins)', '103 FX 7 (echoes)', '104 FX 8 (sci-fi)'],
-    'Ethnic': ['105 Sitar', '106 Banjo', '107 Shamisen', '108 Koto', '109 Kalimba', '110 Bag pipe', '111 Fiddle', '112 Shanai'],
-    'Percussive': ['113 Tinkle Bell', '114 Agogo', '115 Steel Drums', '116 Woodblock', '117 Taiko Drum', '118 Melodic Tom', '119 Synth Drum'],
-    'Sound effects': ['120 Reverse Cymbal', '121 Guitar Fret Noise', '122 Breath Noise', '123 Seashore', '124 Bird Tweet', '125 Telephone Ring', '126 Helicopter', '127 Applause', '128 Gunshot']
-});
+})();
 
 /* get/setInstrument
  --------------------------------------------------- */
@@ -4774,7 +6199,7 @@ root.noteToKey = {}; // 108 ==  C8
 })();
 
 module.exports = root
-},{}],27:[function(require,module,exports){
+},{"../instruments.json":27,"lodash.find":14}],35:[function(require,module,exports){
 /**
  ----------------------------------------------------------
  MIDI.Plugin : 0.3.4 : 2015-03-26
@@ -4912,8 +6337,8 @@ module.exports = function() {
         for (var i = 0; i < instruments.length; i++) {
             var instrument = instruments[i];
             if (instrument === +instrument) { // is numeric
-                if (generalMIDI.GM.byId[instrument]) {
-                    var ins = generalMIDI.GM.byId[instrument];
+                if (generalMIDI.GM.byId(instrument)) {
+                    var ins = generalMIDI.GM.byId(instrument);
                     instruments[i] = ins.id;
                     // if the instrument is a percussion add it to channel 10
                     if(ins['category'] === 'Percussive'){
@@ -5009,7 +6434,7 @@ module.exports = function() {
 
     return root;
 };
-},{"../util/dom_request_script":32,"../util/dom_request_xhr":33,"./audioDetect":25,"./gm":26,"./player":28,"./plugin.audiotag":29,"./plugin.webaudio":30,"./plugin.webmidi":31,"lodash.merge":15}],28:[function(require,module,exports){
+},{"../util/dom_request_script":40,"../util/dom_request_xhr":41,"./audioDetect":33,"./gm":34,"./player":36,"./plugin.audiotag":37,"./plugin.webaudio":38,"./plugin.webmidi":39,"lodash.merge":21}],36:[function(require,module,exports){
 /*
  ----------------------------------------------------------
  MIDI.Player : 0.3.1 : 2015-03-26
@@ -5023,7 +6448,7 @@ module.exports = function (MIDI) {
     var MidiFile = require('../jasmid/midifile');
     'use strict';
     var midi = {};
-
+    midi.tracks = {};
     midi.currentTime = 0;
     midi.endTime = 0;
     midi.restart = 0;
@@ -5118,6 +6543,9 @@ module.exports = function (MIDI) {
         midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null);
         midi.data = midi.replayer.getData();
         midi.endTime = getLength();
+        midi.tracks = midi.getFileTracks();
+        midi.instruments = midi.getFileInstruments();
+        MIDI.loadResource({instruments : midi.instruments});
     };
 
     midi.loadFile = function (file, onsuccess, onprogress, onerror) {
@@ -5153,9 +6581,8 @@ module.exports = function (MIDI) {
         }
     };
 
-    midi.getFileInstruments = function () {
-        var instruments = {};
-        var programs = {};
+    midi.getFileTracks = function(){
+        var tracks = {};
         for (var n = 0; n < midi.data.length; n++) {
             var event = midi.data[n][0].event;
             if (event.type !== 'channel') {
@@ -5163,19 +6590,37 @@ module.exports = function (MIDI) {
             }
             var channel = event.channel;
             switch (event.subtype) {
-                case 'controller':
+                case 'programChange':
+                    tracks[midi.data[n][0].track] = channel;
+                    break;
+            }
+        }
+        return tracks;
+    }
+    midi.getFileInstruments = function () {
+        var instruments = {};
+        var programs = {};
+        var channels ={};
+
+        for (var n = 0; n < midi.data.length; n++) {
+            var event = midi.data[n][0].event;
+            if (event.type !== 'channel') {
+                continue;
+            }
+            var channel = event.channel;
+            switch (event.subtype) {
+                case 'controller':(event)
 //				console.log(event.channel, MIDI.defineControl[event.controllerType], event.value);
                     break;
                 case 'programChange':
                     programs[channel] = event.programNumber;
-                    break;
-                case 'noteOn':
-                    var program = programs[channel];
-                    var gm = generalMIDI.GM.byId[isFinite(program) ? program : channel];
+                    var gm = generalMIDI.GM.byId(event.programNumber);
                     instruments[gm.id] = true;
+
                     break;
             }
         }
+
         var ret = [];
         for (var key in instruments) {
             ret.push(key);
@@ -5392,11 +6837,14 @@ module.exports = function (MIDI) {
             }
         }
     };
+    midi.setTrackVolume = function(val, track){
+        midi.setChannelVolume(val, midi.tracks[track]);
+    };
 
     return midi;
 };
 
-},{"../jasmid/midifile":20,"../jasmid/replayer":21,"./gm":26}],29:[function(require,module,exports){
+},{"../jasmid/midifile":28,"../jasmid/replayer":29,"./gm":34}],37:[function(require,module,exports){
 /*
  ----------------------------------------------------------------------
  AudioTag <audio> - OGG or MPEG Soundbank
@@ -5422,7 +6870,7 @@ for (var nid = 0; nid < 12; nid++) {
 var playChannel = function (channel, note) {
     if (!channels[channel]) return;
     var instrument = channels[channel].instrument;
-    var instrumentId = generalMIDI.GM.byId[instrument].id;
+    var instrumentId = generalMIDI.GM.byId(instrument).id;
     var note = notes[note];
     if (note) {
         var instrumentNoteId = instrumentId + '' + note.id;
@@ -5445,7 +6893,7 @@ var playChannel = function (channel, note) {
 var stopChannel = function (channel, note) {
     if (!channels[channel]) return;
     var instrument = channels[channel].instrument;
-    var instrumentId = generalMIDI.GM.byId[instrument].id;
+    var instrumentId = generalMIDI.GM.byId(instrument).id;
     var note = notes[note];
     if (note) {
         var instrumentNoteId = instrumentId + '' + note.id;
@@ -5551,7 +6999,7 @@ midi.connect = function (opts, _channels_) {
 };
 
 module.exports = midi;
-},{"../lib/Base64binary":23,"./gm":26,"tunajs":18}],30:[function(require,module,exports){
+},{"../lib/Base64binary":31,"./gm":34,"tunajs":25}],38:[function(require,module,exports){
 /*
  ----------------------------------------------------------
  Web Audio API - OGG or MPEG Soundbank
@@ -5623,10 +7071,9 @@ midi.noteOn = function (channelId, noteId, velocity, delay) {
     var channel = channels[channelId];
     var instrument = channel.instrument;
     var bufferId = instrument + '' + noteId;
-
     var buffer = audioBuffers[bufferId];
     if (!buffer) {
-        console.log(generalMIDI.GM.byId[instrument].id, instrument, channelId);
+        console.log(generalMIDI.GM.byId(instrument).id, instrument, channelId);
         return;
     }
 
@@ -5846,7 +7293,7 @@ midi.setContext = function (newCtx, onload, onprogress, onerror) {
             continue;
         }
         ///
-        var synth = generalMIDI.GM.byName[instrument];
+        var synth = generalMIDI.GM.byCleanName(instrument);
         var instrumentId = synth.number;
         ///
         bufferPending[instrumentId] = 0;
@@ -5896,7 +7343,7 @@ function createAudioContext() {
 };
 
 module.exports = midi;
-},{"../lib/Base64binary":23,"./gm":26,"tunajs":18}],31:[function(require,module,exports){
+},{"../lib/Base64binary":31,"./gm":34,"tunajs":25}],39:[function(require,module,exports){
 /*
  ----------------------------------------------------------------------
  Web MIDI API - Native Soundbanks
@@ -5972,7 +7419,7 @@ midi.connect = function (opts) {
 };
 
 module.exports = midi;
-},{"web-midi-api/WebMIDIAPI.min.js":19}],32:[function(require,module,exports){
+},{"web-midi-api/WebMIDIAPI.min.js":26}],40:[function(require,module,exports){
 /*
 	-----------------------------------------------------------
 	dom.loadScript.js : 0.1.4 : 2014/02/12 : http://mudcu.be
@@ -6198,7 +7645,7 @@ var globalExists = function(path, root) {
 if (typeof (module) !== "undefined" && module.exports) {
 	module.exports = dom;
 }
-},{}],33:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /*
  ----------------------------------------------------------
  util/Request : 0.1.1 : 2015-03-26
@@ -6337,6 +7784,7 @@ var request = function (opts, onsuccess, onerror, onprogress) {
 
 module.exports = request;
 
-},{}]},{},[24]);
+},{}]},{},[32])
+
 
 //# sourceMappingURL=bundle.js.map

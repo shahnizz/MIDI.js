@@ -135,8 +135,8 @@ module.exports = function() {
         for (var i = 0; i < instruments.length; i++) {
             var instrument = instruments[i];
             if (instrument === +instrument) { // is numeric
-                if (generalMIDI.GM.byId[instrument]) {
-                    var ins = generalMIDI.GM.byId[instrument];
+                if (generalMIDI.GM.byId(instrument)) {
+                    var ins = generalMIDI.GM.byId(instrument);
                     instruments[i] = ins.id;
                     // if the instrument is a percussion add it to channel 10
                     if(ins['category'] === 'Percussive'){

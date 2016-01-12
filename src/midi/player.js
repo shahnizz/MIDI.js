@@ -11,7 +11,7 @@ module.exports = function (MIDI) {
     var MidiFile = require('../jasmid/midifile');
     'use strict';
     var midi = {};
-
+    midi.tracks = {};
     midi.currentTime = 0;
     midi.endTime = 0;
     midi.restart = 0;
@@ -106,6 +106,9 @@ module.exports = function (MIDI) {
         midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null);
         midi.data = midi.replayer.getData();
         midi.endTime = getLength();
+        midi.tracks = midi.getFileTracks();
+        midi.instruments = midi.getFileInstruments();
+        MIDI.loadResource({instruments : midi.instruments});
     };
 
     midi.loadFile = function (file, onsuccess, onprogress, onerror) {
@@ -141,9 +144,8 @@ module.exports = function (MIDI) {
         }
     };
 
-    midi.getFileInstruments = function () {
-        var instruments = {};
-        var programs = {};
+    midi.getFileTracks = function(){
+        var tracks = {};
         for (var n = 0; n < midi.data.length; n++) {
             var event = midi.data[n][0].event;
             if (event.type !== 'channel') {
@@ -151,19 +153,37 @@ module.exports = function (MIDI) {
             }
             var channel = event.channel;
             switch (event.subtype) {
-                case 'controller':
+                case 'programChange':
+                    tracks[midi.data[n][0].track] = channel;
+                    break;
+            }
+        }
+        return tracks;
+    }
+    midi.getFileInstruments = function () {
+        var instruments = {};
+        var programs = {};
+        var channels ={};
+
+        for (var n = 0; n < midi.data.length; n++) {
+            var event = midi.data[n][0].event;
+            if (event.type !== 'channel') {
+                continue;
+            }
+            var channel = event.channel;
+            switch (event.subtype) {
+                case 'controller':(event)
 //				console.log(event.channel, MIDI.defineControl[event.controllerType], event.value);
                     break;
                 case 'programChange':
                     programs[channel] = event.programNumber;
-                    break;
-                case 'noteOn':
-                    var program = programs[channel];
-                    var gm = generalMIDI.GM.byId[isFinite(program) ? program : channel];
+                    var gm = generalMIDI.GM.byId(event.programNumber);
                     instruments[gm.id] = true;
+
                     break;
             }
         }
+
         var ret = [];
         for (var key in instruments) {
             ret.push(key);
@@ -379,6 +399,9 @@ module.exports = function (MIDI) {
                 }
             }
         }
+    };
+    midi.setTrackVolume = function(val, track){
+        midi.setChannelVolume(val, midi.tracks[track]);
     };
 
     return midi;

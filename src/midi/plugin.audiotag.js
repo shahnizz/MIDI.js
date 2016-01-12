@@ -23,7 +23,7 @@ for (var nid = 0; nid < 12; nid++) {
 var playChannel = function (channel, note) {
     if (!channels[channel]) return;
     var instrument = channels[channel].instrument;
-    var instrumentId = generalMIDI.GM.byId[instrument].id;
+    var instrumentId = generalMIDI.GM.byId(instrument).id;
     var note = notes[note];
     if (note) {
         var instrumentNoteId = instrumentId + '' + note.id;
@@ -46,7 +46,7 @@ var playChannel = function (channel, note) {
 var stopChannel = function (channel, note) {
     if (!channels[channel]) return;
     var instrument = channels[channel].instrument;
-    var instrumentId = generalMIDI.GM.byId[instrument].id;
+    var instrumentId = generalMIDI.GM.byId(instrument).id;
     var note = notes[note];
     if (note) {
         var instrumentNoteId = instrumentId + '' + note.id;
