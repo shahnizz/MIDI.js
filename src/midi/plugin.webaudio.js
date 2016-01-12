@@ -304,7 +304,9 @@ midi.setContext = function (newCtx, onload, onprogress, onerror) {
     ///
     setTimeout(waitForEnd, 1);
 };
-
+midi.reconnect = function(onload, onprogress, onerror){
+    midi.setContext(ctx, onload, onprogress, onerror);
+}
 /* Load audio file: streaming | base64 | arraybuffer
  ---------------------------------------------------------------------- */
 function loadAudio(url, onload, onerror) {

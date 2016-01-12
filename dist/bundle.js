@@ -3362,7 +3362,16 @@ module.exports = function (MIDI) {
         midi.endTime = getLength();
         midi.tracks = midi.getFileTracks();
         midi.instruments = midi.getFileInstruments();
-        MIDI.loadResource({instruments : midi.instruments});
+        MIDI.loadResource(
+            {
+                instruments: midi.instruments,
+                onsuccess: function () {
+                    console.log('reconnect')
+                    MIDI.reconnect(onsuccess);
+                },
+                onprogress: onprogress,
+                onerror: onerror
+            });
     };
 
     midi.loadFile = function (file, onsuccess, onprogress, onerror) {
@@ -3398,7 +3407,7 @@ module.exports = function (MIDI) {
         }
     };
 
-    midi.getFileTracks = function(){
+    midi.getFileTracks = function () {
         var tracks = {};
         for (var n = 0; n < midi.data.length; n++) {
             var event = midi.data[n][0].event;
@@ -3417,7 +3426,7 @@ module.exports = function (MIDI) {
     midi.getFileInstruments = function () {
         var instruments = {};
         var programs = {};
-        var channels ={};
+        var channels = {};
 
         for (var n = 0; n < midi.data.length; n++) {
             var event = midi.data[n][0].event;
@@ -3426,7 +3435,8 @@ module.exports = function (MIDI) {
             }
             var channel = event.channel;
             switch (event.subtype) {
-                case 'controller':(event)
+                case 'controller':
+                    (event)
 //				console.log(event.channel, MIDI.defineControl[event.controllerType], event.value);
                     break;
                 case 'programChange':
@@ -3573,7 +3583,7 @@ module.exports = function (MIDI) {
                     break;
                 case 'programChange':
                     // the percussion should not be set from the midi, it is set in the loader.
-                    if(channelId != 9){
+                    if (channelId != 9) {
                         MIDI.programChange(channelId, event.programNumber, delay);
                     }
                     break;
@@ -3643,18 +3653,18 @@ module.exports = function (MIDI) {
         noteRegistrar = {};
     };
 
-    midi.setChannelVolume = function(val, channel){
+    midi.setChannelVolume = function (val, channel) {
         MIDI.channels[channel].volume = val;
-        if(MIDI.api === "webaudio"){
-            for(var i = 0; i < eventQueue.length; i++){
+        if (MIDI.api === "webaudio") {
+            for (var i = 0; i < eventQueue.length; i++) {
                 var event = eventQueue[i];
-                if (event && event.source && typeof event.source.setChannelVolume === 'function' && event.source.channel === channel){
+                if (event && event.source && typeof event.source.setChannelVolume === 'function' && event.source.channel === channel) {
                     event.source.setChannelVolume(val);
                 }
             }
         }
     };
-    midi.setTrackVolume = function(val, track){
+    midi.setTrackVolume = function (val, track) {
         midi.setChannelVolume(val, midi.tracks[track]);
     };
 

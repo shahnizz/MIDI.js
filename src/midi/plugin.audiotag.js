@@ -150,5 +150,7 @@ midi.connect = function (opts, _channels_) {
     });
     return this;
 };
+midi.reconnect = function(){
 
+}
 module.exports = midi;
