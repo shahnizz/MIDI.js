@@ -10,7 +10,6 @@
 'use strict';
 var generalMIDI = require('./gm');
 var Base64Binary = require('../lib/Base64binary');
-var Tuna = require('tunajs');
 var audioContext = null; // new AudioContext();
 var useStreamingBuffer = false; // !!audioContext.createMediaElementSource;
 var midi = {api: 'webaudio'};

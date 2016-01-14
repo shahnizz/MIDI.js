@@ -7,7 +7,6 @@
  */
 var generalMIDI = require('./gm');
 var Base64Binary = require('../lib/Base64binary');
-var Tuna = require('tunajs');
 var midi = {api: 'audiotag'};
 var noteToKey = {};
 var volume = 127; // floating point
