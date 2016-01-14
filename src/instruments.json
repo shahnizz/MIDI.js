@@ -60,6 +60,16 @@
       "Orchestral Harp": 46,
       "Timpani": 47
     },
+    "Ensemble": {
+      "Strings1": 48,
+      "Strings2": 49,
+      "Synth Strings 1": 50,
+      "Synth Strings 2": 51,
+      "Choir Aah": 52,
+      "Voice Ooh": 53,
+      "Synth Voice": 54,
+      "Orchestral Hit": 55
+    },
     "Brass": {
       "Trumpet": 56,
       "Trombone": 57,
