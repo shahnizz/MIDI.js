@@ -9,10 +9,19 @@
 #   Lame
 #   OggEnc (from vorbis-tools)
 #   Ruby Gem: midilib
+#   Optionally:
+#    * Ruby gem: parallel
+#    * Sox
 #
 #   $ brew install --with-libsndfile fluidsynth
 #   $ brew install vorbis-tools lame
 #   $ gem install midilib
+#
+#   For parallel generation
+#   $ gem install parallel
+#
+#   To optimize the sound files by not exporting silent notes
+#   $ brew install sox
 #
 # You'll need to download a GM soundbank to generate audio.
 #
@@ -20,7 +29,8 @@
 #
 # 1) Install the above dependencies.
 # 2) Edit BUILD_DIR, SOUNDFONT, and INSTRUMENTS as required.
-# 3) Run without any argument.
+# 3) Edit the other options if needed
+# 4) Run without any argument.
 
 require 'base64'
 require 'fileutils'
@@ -28,11 +38,18 @@ require 'midilib'
 require 'zlib'
 include FileUtils
 
+# gzip the resulting js files
 GZIP = false
+# delete the generated mp3 and ogg files
 CLEAN_AUDIO = true
+# generate the js files in parallel per instrument
 PARALLEL = true
+# do not generate sound for silent note in the soundfont
+OPTIMIZE_EMPTY_NOTES=true
 
-BUILD_DIR = "./soundfont" # Output path
+# Output path
+BUILD_DIR = "./soundfont"
+# Soundfont file path
 SOUNDFONT = "/Users/lasconic/Downloads/FluidR3Mono_GM/FluidR3Mono_GM2-200.SF2" # Soundfont file path
 
 # This script will generate MIDI.js-compatible instrument JS files for
@@ -167,7 +184,7 @@ INSTRUMENTS = [
 126,
 127,
 
-##drums
+# drumset, they are expected to be over > 127
 #standard
 128, #0
 129, #1
@@ -221,6 +238,9 @@ end
 OGGENC = `which oggenc`.chomp
 LAME = `which lame`.chomp
 FLUIDSYNTH = `which fluidsynth`.chomp
+if OPTIMIZE_EMPTY_NOTES
+  SOX = `which sox`.chomp
+end
 
 puts "Building the following instruments using font: " + SOUNDFONT
 
@@ -233,6 +253,9 @@ puts
 puts "Using OGG encoder: " + OGGENC
 puts "Using MP3 encoder: " + LAME
 puts "Using FluidSynth encoder: " + FLUIDSYNTH
+if OPTIMIZE_EMPTY_NOTES
+  puts "Using Sox: " + SOX
+end
 puts
 puts "Sending output to: " + BUILD_DIR
 puts
@@ -243,6 +266,9 @@ raise "Can't find soundfont: #{SOUNDFONT}" unless File.exists? SOUNDFONT
 raise "Can't find 'oggenc' command" if OGGENC.empty?
 raise "Can't find 'lame' command" if LAME.empty?
 raise "Can't find 'fluidsynth' command" if FLUIDSYNTH.empty?
+if OPTIMIZE_EMPTY_NOTES
+  raise "Can't find 'sox' command" if SOX.empty?
+end
 raise "Output directory does not exist: #{BUILD_DIR}" unless File.exists?(BUILD_DIR)
 
 puts "Hit return to begin."
@@ -320,14 +346,20 @@ end
 
 def run_command(cmd)
   puts "Running: " + cmd
-  `#{cmd}`
+  return `#{cmd}`
 end
 
 def midi_to_audio(source, target)
   run_command "#{FLUIDSYNTH} -C no -R no -g 0.5 -F #{target} #{SOUNDFONT} #{source}"
+  amplitude = run_command "sox #{target} -n stat 2>&1 | sed -n 's#^Maximum amplitude:[^0-9]*\\([0-9.]*\\)$#\\1#p'"
+  if OPTIMIZE_EMPTY_NOTES and amplitude.to_f == 0.0
+    rm target
+    return false
+  end
   run_command "#{OGGENC} -m 32 -M 128 #{target}"
   run_command "#{LAME} -v -b 8 -B 64 #{target}"
   rm target
+  return true
 end
 
 def open_js_file(instrument_key, type)
@@ -373,14 +405,18 @@ def generate_audio(program)
     puts "Generating: #{output_name}"
     temp_file_specific = TEMP_FILE % [output_name, instrument_key]
     generate_midi(program, note_value, temp_file_specific)
-    midi_to_audio(temp_file_specific, output_path_prefix + ".wav")
+    conversion_res = midi_to_audio(temp_file_specific, output_path_prefix + ".wav")
 
-    puts "Updating JS files..."
-    ogg_js_file.write(base64js(output_name, output_path_prefix + ".ogg", "ogg") + ",\n")
-    mp3_js_file.write(base64js(output_name, output_path_prefix + ".mp3", "mp3") + ",\n")
+    if conversion_res
+      puts "Updating JS files..."
+      ogg_js_file.write(base64js(output_name, output_path_prefix + ".ogg", "ogg") + ",\n")
+      mp3_js_file.write(base64js(output_name, output_path_prefix + ".mp3", "mp3") + ",\n")
 
-    mv output_path_prefix + ".mp3", "#{BUILD_DIR}/#{instrument_key}-mp3/#{output_name}.mp3"
-    mv output_path_prefix + ".ogg", "#{BUILD_DIR}/#{instrument_key}-ogg/#{output_name}.ogg"
+      mv output_path_prefix + ".mp3", "#{BUILD_DIR}/#{instrument_key}-mp3/#{output_name}.mp3"
+      mv output_path_prefix + ".ogg", "#{BUILD_DIR}/#{instrument_key}-ogg/#{output_name}.ogg"
+    else
+      puts "#{instrument_key} -- #{output_name} is silent"
+    end
     rm temp_file_specific
   end
 
