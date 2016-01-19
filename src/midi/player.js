@@ -183,7 +183,7 @@ module.exports = function (MIDI) {
             switch (event.subtype) {
                 case 'programChange':
                     if (channel == 9) {
-                        // The drumset is outside of the generel midi spectrum, so we just added them after 127
+                        // The drumset is outside of the general midi spectrum, so we just added them after 127
                         var gm = generalMIDI.GM.byId(event.programNumber + 128);
                         instruments[gm.id] = true;
                     } else {
@@ -328,7 +328,7 @@ module.exports = function (MIDI) {
                     MIDI.setController(channelId, event.controllerType, event.value, delay);
                     break;
                 case 'programChange':
-                    // the percussion should not be set from the midi, it is set in the loader.
+                    // The drumset is outside of the general midi spectrum, so we just added them after 127
                     if (channelId == 9) {
                         MIDI.programChange(channelId, event.programNumber +128, delay);
                     } else  {
