@@ -238,7 +238,6 @@ midi.getContext = function () {
 };
 
 midi.setContext = function (newCtx, onload, onprogress, onerror) {
-
     ctx = newCtx;
     /// tuna.js effects module - https://github.com/Dinahmoe/tuna
     if (typeof Tuna !== 'undefined' && !ctx.tunajs) {

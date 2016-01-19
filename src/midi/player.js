@@ -181,15 +181,15 @@ module.exports = function (MIDI) {
             }
             var channel = event.channel;
             switch (event.subtype) {
-                case 'controller':
-                    (event)
-//				console.log(event.channel, MIDI.defineControl[event.controllerType], event.value);
-                    break;
                 case 'programChange':
-                    programs[channel] = event.programNumber;
-                    var gm = generalMIDI.GM.byId(event.programNumber);
-                    instruments[gm.id] = true;
-
+                    if (channel == 9) {
+                        // The drumset is outside of the generel midi spectrum, so we just added them after 127
+                        var gm = generalMIDI.GM.byId(event.programNumber + 128);
+                        instruments[gm.id] = true;
+                    } else {
+                        var gm = generalMIDI.GM.byId(event.programNumber);
+                        instruments[gm.id] = true;
+                    }
                     break;
             }
         }
@@ -329,7 +329,9 @@ module.exports = function (MIDI) {
                     break;
                 case 'programChange':
                     // the percussion should not be set from the midi, it is set in the loader.
-                    if (channelId != 9) {
+                    if (channelId == 9) {
+                        MIDI.programChange(channelId, event.programNumber +128, delay);
+                    } else  {
                         MIDI.programChange(channelId, event.programNumber, delay);
                     }
                     break;

@@ -9,9 +9,6 @@ var _ = {
 };
 root.GM = (function () {
     var instruments = require('../instruments.json');
-    var melodic_sounds = instruments['Melodic sounds'];
-    var percussion = instruments['Percussion'];
-
     var clean = function (name) {
         return name.replace(/[^a-z0-9 ]/gi, '').replace(/[ ]/g, '_').toLowerCase();
     };
@@ -19,7 +16,7 @@ root.GM = (function () {
     var res = {
         byId: function(id){
             var ins;
-            _.find(melodic_sounds, function(categorie, key){
+            _.find(instruments, function(categorie, key){
                 var result = _.find(categorie, function(instrument, key){
                     if(instrument == id){
                         ins = {};
@@ -39,7 +36,7 @@ root.GM = (function () {
         },
         byName: function(name){
             var ins;
-            _.find(melodic_sounds, function(categorie, key){
+            _.find(instruments, function(categorie, key){
                 var result = _.find(categorie, function(instrument, key){
                     if(name == key){
                         ins = {};
@@ -59,7 +56,7 @@ root.GM = (function () {
         },
         byCleanName: function(name){
             var ins;
-            _.find(melodic_sounds, function(categorie, key){
+            _.find(instruments, function(categorie, key){
                 var result = _.find(categorie, function(instrument, key){
                     if(name == clean(key)){
                         ins = {};
@@ -78,7 +75,7 @@ root.GM = (function () {
             return ins;
         },
         byCategory: function(cat){
-            return _.find(melodic_sounds, function(categorie, key){
+            return _.find(instruments, function(categorie, key){
                 return cat == key;
             })
         }
