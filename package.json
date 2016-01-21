@@ -7,6 +7,7 @@
     "type": "git",
     "url": "git://github.com/musescore/MIDI.js.git"
   },
+  "test" :"mocha -R src",
   "main": "./js/main.js",
   "license": "MIT",
   "bugs": {

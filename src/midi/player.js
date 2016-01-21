@@ -23,9 +23,9 @@ module.exports = function (MIDI) {
             if (midi.currentTime < -1) {
                 midi.currentTime = -1;
             }
+            var channelInstrumenst = midi.setChannelInstruments(midi.currentTime);
             startAudio(midi.currentTime, null, onsuccess);
         };
-
     midi.pause = function () {
         var tmp = midi.restart;
         stopAudio();
@@ -108,6 +108,7 @@ module.exports = function (MIDI) {
         midi.endTime = getLength();
         midi.tracks = midi.getFileTracks();
         midi.instruments = midi.getFileInstruments();
+
         MIDI.loadResource(
             {
                 instruments: midi.instruments,
@@ -169,6 +170,37 @@ module.exports = function (MIDI) {
         }
         return tracks;
     }
+
+    midi.setChannelInstruments = function(currentTime){
+
+        var instruments = {};
+        var programs = {};
+        var events = {};
+
+        for (var n = 0; n < midi.data.length; n++) {
+            var event = midi.data[n][0].event;
+            if (event.type !== 'channel') {
+                continue;
+            }
+            var channel = event.channel;
+            switch (event.subtype) {
+                case 'programChange':
+                    console.log(event);
+                    if(event.deltaTime <=  currentTime){
+                        events[event.channel] = event;
+                    }
+                    break;
+            }
+        }
+        for (var key in events) {
+            if (key == 9) {
+                MIDI.programChange(key, events[key].programNumber + 128, 0);
+            } else  {
+                MIDI.programChange(key, events[key].programNumber, 0);
+            }
+        }
+    };
+
     midi.getFileInstruments = function () {
         var instruments = {};
         var programs = {};
@@ -306,14 +338,16 @@ module.exports = function (MIDI) {
         ///
         for (var n = 0; n < length && messages < 100; n++) {
             var obj = data[n];
+            var event = obj[0].event;
             if ((queuedTime += obj[1]) < currentTime) {
                 offset = queuedTime;
                 continue;
             }
+
             ///
             currentTime = queuedTime - offset;
             ///
-            var event = obj[0].event;
+
             if (event.type !== 'channel') {
                 continue;
             }
@@ -330,7 +364,7 @@ module.exports = function (MIDI) {
                 case 'programChange':
                     // The drumset is outside of the general midi spectrum, so we just added them after 127
                     if (channelId == 9) {
-                        MIDI.programChange(channelId, event.programNumber +128, delay);
+                        MIDI.programChange(channelId, event.programNumber + 128, delay);
                     } else  {
                         MIDI.programChange(channelId, event.programNumber, delay);
                     }
