@@ -23,7 +23,7 @@ module.exports = function (MIDI) {
             if (midi.currentTime < -1) {
                 midi.currentTime = -1;
             }
-            var channelInstrumenst = midi.setChannelInstruments(midi.currentTime);
+            midi.setChannelInstruments(midi.currentTime);
             startAudio(midi.currentTime, null, onsuccess);
         };
     midi.pause = function () {
