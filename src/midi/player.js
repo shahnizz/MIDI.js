@@ -113,7 +113,6 @@ module.exports = function (MIDI) {
             {
                 instruments: midi.instruments,
                 onsuccess: function () {
-                    console.log('reconnect')
                     MIDI.reconnect(onsuccess);
                 },
                 onprogress: onprogress,
@@ -185,7 +184,6 @@ module.exports = function (MIDI) {
             var channel = event.channel;
             switch (event.subtype) {
                 case 'programChange':
-                    console.log(event);
                     if(event.deltaTime <=  currentTime){
                         events[event.channel] = event;
                     }
