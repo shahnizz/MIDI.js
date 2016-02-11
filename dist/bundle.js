@@ -3025,226 +3025,204 @@ function toPlainObject(value) {
 module.exports = toPlainObject;
 
 },{"lodash._basecopy":4,"lodash.keysin":20}],25:[function(require,module,exports){
-(function (global){
-!function e(t,n,i){function s(a,r){if(!n[a]){if(!t[a]){var c="function"==typeof require&&require;if(!r&&c)return c(a,!0);if(o)return o(a,!0);var u=new Error("Cannot find module '"+a+"'");throw u.code="MODULE_NOT_FOUND",u}var f=n[a]={exports:{}};t[a][0].call(f.exports,function(e){var n=t[a][1][e];return s(n?n:e)},f,f.exports,e,t,n,i)}return n[a].exports}for(var o="function"==typeof require&&require,a=0;a<i.length;a++)s(i[a]);return s}({1:[function(e,t,n){function i(){f=!1,r.length?u=r.concat(u):l=-1,u.length&&s()}function s(){if(!f){var e=setTimeout(i);f=!0;for(var t=u.length;t;){for(r=u,u=[];++l<t;)r&&r[l].run();l=-1,t=u.length}r=null,f=!1,clearTimeout(e)}}function o(e,t){this.fun=e,this.array=t}function a(){}var r,c=t.exports={},u=[],f=!1,l=-1;c.nextTick=function(e){var t=new Array(arguments.length-1);if(arguments.length>1)for(var n=1;n<arguments.length;n++)t[n-1]=arguments[n];u.push(new o(e,t)),1!==u.length||f||setTimeout(s,0)},o.prototype.run=function(){this.fun.apply(null,this.array)},c.title="browser",c.browser=!0,c.env={},c.argv=[],c.version="",c.versions={},c.on=a,c.addListener=a,c.once=a,c.off=a,c.removeListener=a,c.removeAllListeners=a,c.emit=a,c.binding=function(e){throw new Error("process.binding is not supported")},c.cwd=function(){return"/"},c.chdir=function(e){throw new Error("process.chdir is not supported")},c.umask=function(){return 0}},{}],2:[function(e,t,n){"use strict";function i(e){var t="jazz_"+r++ +Date.now(),n=void 0,i=void 0,s=void 0;if(o.getDevice().nodejs===!0)i=new jazzMidi.MIDI;else{var u=document.createElement("object");u.id=t+"ie",u.classid="CLSID:1ACE1618-1C7D-4561-AEE1-34842AA85E90",s=u;var f=document.createElement("object");f.id=t,f.type="audio/x-jazz",u.appendChild(f),i=f;var l=document.createElement("p");l.appendChild(document.createTextNode("This page requires the "));var d=document.createElement("a");d.appendChild(document.createTextNode("Jazz plugin")),d.href="http://jazz-soft.net/",l.appendChild(d),l.appendChild(document.createTextNode(".")),f.appendChild(l);var h=document.getElementById("MIDIPlugin");h||(h=document.createElement("div"),h.id="MIDIPlugin",h.style.position="absolute",h.style.visibility="hidden",h.style.left="-9999px",h.style.top="-9999px",document.body.appendChild(h)),h.appendChild(u)}setTimeout(function(){i.isJazz===!0?n=i:s.isJazz===!0&&(n=s),void 0!==n&&(n._perfTimeZero=performance.now(),c.set(t,n)),e(n)},a)}function s(e,t){var n=null,s="input"===e?"inputInUse":"outputInUse",o=!0,a=!1,r=void 0;try{for(var u,f=c.values()[Symbol.iterator]();!(o=(u=f.next()).done);o=!0){var l=u.value;if(l[s]!==!0){n=l;break}}}catch(d){a=!0,r=d}finally{try{!o&&f["return"]&&f["return"]()}finally{if(a)throw r}}null===n?i(t):t(n)}Object.defineProperty(n,"__esModule",{value:!0}),n.createJazzInstance=i,n.getJazzInstance=s;var o=e("./util"),a=100,r=0,c=new Map},{"./util":9}],3:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}function s(){return new Promise(function(e,t){return void 0!==I?void e(I):"ie9"===y.getDevice().browser?void t({message:"WebMIDIAPIShim supports Internet Explorer 10 and above."}):void v.createJazzInstance(function(n){return void 0===n?void t({message:"No access to MIDI devices: browser does not support the WebMIDI API and the Jazz plugin is not installed."}):(_=n,void o(function(){u(),I=new D(w,b),e(I)}))})})}function o(e){var t=_.MidiInList(),n=_.MidiOutList(),i=t.length,s=n.length;a(0,i,"input",t,function(){a(0,s,"output",n,e)})}function a(e,t,n,i,s){if(t>e){var o=i[e++];r(n,o,function(){a(e,t,n,i,s)})}else s()}function r(e,t,n){v.getJazzInstance(e,function(i){var s=void 0,o=[t,"",""];"input"===e?(i.Support("MidiInInfo")&&(o=i.MidiInInfo(t)),s=new p.MIDIInput(o,i),w.set(s.id,s)):"output"===e&&(i.Support("MidiOutInfo")&&(o=i.MidiOutInfo(t)),s=new m.MIDIOutput(o,i),b.set(s.id,s)),n(s)})}function c(e,t){var n=void 0,i=!0,s=!1,o=void 0;try{for(var a,r=e.values()[Symbol.iterator]();!(i=(a=r.next()).done)&&(n=a.value,n.name!==t);i=!0);}catch(c){s=!0,o=c}finally{try{!i&&r["return"]&&r["return"]()}finally{if(s)throw o}}return n}function u(){_.OnDisconnectMidiIn(function(e){var t=c(w,e);void 0!==t&&(t.state="disconnected",t.close(),t._jazzInstance.inputInUse=!1,w["delete"](t.id),f(t))}),_.OnDisconnectMidiOut(function(e){var t=c(b,e);void 0!==t&&(t.state="disconnected",t.close(),t._jazzInstance.outputInUse=!1,b["delete"](t.id),f(t))}),_.OnConnectMidiIn(function(e){r("input",e,function(e){f(e)})}),_.OnConnectMidiOut(function(e){r("output",e,function(e){f(e)})})}function f(e){e.dispatchEvent(new g.MIDIConnectionEvent(e,e));var t=new g.MIDIConnectionEvent(I,e);"function"==typeof I.onstatechange&&I.onstatechange(t);var n=!0,i=!1,s=void 0;try{for(var o,a=z[Symbol.iterator]();!(n=(o=a.next()).done);n=!0){var r=o.value;r(t)}}catch(c){i=!0,s=c}finally{try{!n&&a["return"]&&a["return"]()}finally{if(i)throw s}}}function l(){w.forEach(function(e){e._jazzInstance.MidiInClose()})}function d(e,t){var n=void 0;return"input"===t?(n=M.get(e),void 0===n&&(n=y.generateUUID(),M.set(e,n))):"output"===t&&(n=x.get(e),void 0===n&&(n=y.generateUUID(),x.set(e,n))),n}Object.defineProperty(n,"__esModule",{value:!0});var h=function(){function e(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(t,n,i){return n&&e(t.prototype,n),i&&e(t,i),t}}();n.createMIDIAccess=s,n.dispatchEvent=f,n.closeAllMIDIInputs=l,n.getMIDIDeviceId=d;var v=e("./jazz_instance"),p=e("./midi_input"),m=e("./midi_output"),g=e("./midiconnection_event"),y=e("./util"),I=void 0,_=void 0,w=new Map,b=new Map,M=new Map,x=new Map,z=new Set,D=function(){function e(t,n){i(this,e),this.sysexEnabled=!0,this.inputs=t,this.outputs=n}return h(e,[{key:"addEventListener",value:function(e,t,n){"statechange"===e&&z.has(t)===!1&&z.add(t)}},{key:"removeEventListener",value:function(e,t,n){"statechange"===e&&z.has(t)===!0&&z["delete"](t)}}]),e}()},{"./jazz_instance":2,"./midi_input":4,"./midi_output":5,"./midiconnection_event":6,"./util":9}],4:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function(){function e(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(t,n,i){return n&&e(t.prototype,n),i&&e(t,i),t}}(),o=e("./util"),a=e("./midimessage_event"),r=(e("./midiconnection_event"),e("./midi_access")),c=void 0,u=o.getDevice().nodejs,f=function(){function e(t,n){i(this,e),this.id=r.getMIDIDeviceId(t[0],"input"),this.name=t[0],this.manufacturer=t[1],this.version=t[2],this.type="input",this.state="connected",this.connection="pending",this.onstatechange=null,this._onmidimessage=null,Object.defineProperty(this,"onmidimessage",{set:function(e){this._onmidimessage=e,"function"==typeof e&&this.open()}}),this._listeners=(new Map).set("midimessage",new Set).set("statechange",new Set),this._inLongSysexMessage=!1,this._sysexBuffer=new Uint8Array,this._jazzInstance=n,this._jazzInstance.inputInUse=!0,"linux"===o.getDevice().platform&&this._jazzInstance.MidiInOpen(this.name,c.bind(this))}return s(e,[{key:"addEventListener",value:function(e,t,n){var i=this._listeners.get(e);void 0!==i&&i.has(t)===!1&&i.add(t)}},{key:"removeEventListener",value:function(e,t,n){var i=this._listeners.get(e);void 0!==i&&i.has(t)===!1&&i["delete"](t)}},{key:"dispatchEvent",value:function(e){var t=this._listeners.get(e.type);t.forEach(function(t){t(e)}),"midimessage"===e.type?null!==this._onmidimessage&&this._onmidimessage(e):"statechange"===e.type&&null!==this.onstatechange&&this.onstatechange(e)}},{key:"open",value:function(){"open"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiInOpen(this.name,c.bind(this)),this.connection="open",r.dispatchEvent(this))}},{key:"close",value:function(){"closed"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiInClose(),this.connection="closed",r.dispatchEvent(this),this._onmidimessage=null,this.onstatechange=null,this._listeners.get("midimessage").clear(),this._listeners.get("statechange").clear())}},{key:"_appendToSysexBuffer",value:function(e){var t=this._sysexBuffer.length,n=new Uint8Array(t+e.length);n.set(this._sysexBuffer),n.set(e,t),this._sysexBuffer=n}},{key:"_bufferLongSysex",value:function(e,t){for(var n=t;n<e.length;){if(247==e[n])return n++,this._appendToSysexBuffer(e.slice(t,n)),n;n++}return this._appendToSysexBuffer(e.slice(t,n)),this._inLongSysexMessage=!0,n}}]),e}();n.MIDIInput=f,c=function(e,t){var n=0,i=void 0,s=!1;for(i=0;i<t.length;i+=n){var o=!0;if(this._inLongSysexMessage){if(i=this._bufferLongSysex(t,i),247!=t[i-1])return;s=!0}else switch(s=!1,240&t[i]){case 0:n=1,o=!1;break;case 128:case 144:case 160:case 176:case 224:n=3;break;case 192:case 208:n=2;break;case 240:switch(t[i]){case 240:if(i=this._bufferLongSysex(t,i),247!=t[i-1])return;s=!0;break;case 241:case 243:n=2;break;case 242:n=3;break;default:n=1}}if(o){var r={};if(r.receivedTime=parseFloat(e.toString())+this._jazzInstance._perfTimeZero,s||this._inLongSysexMessage?(r.data=new Uint8Array(this._sysexBuffer),this._sysexBuffer=new Uint8Array(0),this._inLongSysexMessage=!1):r.data=new Uint8Array(t.slice(i,n+i)),u)this._onmidimessage&&this._onmidimessage(r);else{var c=new a.MIDIMessageEvent(this,r.data,r.receivedTime);this.dispatchEvent(c)}}}}},{"./midi_access":3,"./midiconnection_event":6,"./midimessage_event":7,"./util":9}],5:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function(){function e(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(t,n,i){return n&&e(t.prototype,n),i&&e(t,i),t}}(),o=e("./util"),a=e("./midi_access"),r=function(){function e(t,n){i(this,e),this.id=a.getMIDIDeviceId(t[0],"output"),this.name=t[0],this.manufacturer=t[1],this.version=t[2],this.type="output",this.state="connected",this.connection="pending",this.onmidimessage=null,this.onstatechange=null,this._listeners=new Set,this._inLongSysexMessage=!1,this._sysexBuffer=new Uint8Array,this._jazzInstance=n,this._jazzInstance.outputInUse=!0,"linux"===o.getDevice().platform&&this._jazzInstance.MidiOutOpen(this.name)}return s(e,[{key:"open",value:function(){"open"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiOutOpen(this.name),this.connection="open",a.dispatchEvent(this))}},{key:"close",value:function(){"closed"!==this.connection&&("linux"!==o.getDevice().platform&&this._jazzInstance.MidiOutClose(),this.connection="closed",a.dispatchEvent(this),this.onstatechange=null,this._listeners.clear())}},{key:"send",value:function(e,t){var n=this,i=0;return 0===e.length?!1:(t&&(i=Math.floor(t-performance.now())),t&&i>1?setTimeout(function(){n._jazzInstance.MidiOutLong(e)},i):this._jazzInstance.MidiOutLong(e),!0)}},{key:"clear",value:function(){}},{key:"addEventListener",value:function(e,t,n){"statechange"===e&&this._listeners.has(t)===!1&&this._listeners.add(t)}},{key:"removeEventListener",value:function(e,t,n){"statechange"===e&&this._listeners.has(t)===!1&&this._listeners["delete"](t)}},{key:"dispatchEvent",value:function(e){this._listeners.forEach(function(t){t(e)}),null!==this.onstatechange&&this.onstatechange(e)}}]),e}();n.MIDIOutput=r},{"./midi_access":3,"./util":9}],6:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function o(e,t){i(this,o),this.bubbles=!1,this.cancelBubble=!1,this.cancelable=!1,this.currentTarget=e,this.defaultPrevented=!1,this.eventPhase=0,this.path=[],this.port=t,this.returnValue=!0,this.srcElement=e,this.target=e,this.timeStamp=Date.now(),this.type="statechange"};n.MIDIConnectionEvent=s},{}],7:[function(e,t,n){"use strict";function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}Object.defineProperty(n,"__esModule",{value:!0});var s=function o(e,t,n){i(this,o),this.bubbles=!1,this.cancelBubble=!1,this.cancelable=!1,this.currentTarget=e,this.data=t,this.defaultPrevented=!1,this.eventPhase=0,this.path=[],this.receivedTime=n,this.returnValue=!0,this.srcElement=e,this.target=e,this.timeStamp=Date.now(),this.type="midimessage"};n.MIDIMessageEvent=s},{}],8:[function(e,t,n){"use strict";var i=e("./midi_access"),s=e("./util"),o=void 0;!function(){navigator.requestMIDIAccess||(s.polyfill(),navigator.requestMIDIAccess=function(){return void 0===o&&(o=i.createMIDIAccess()),o},s.getDevice().nodejs===!0&&(navigator.close=function(){i.closeAllMIDIInputs()}))}()},{"./midi_access":3,"./util":9}],9:[function(e,t,n){(function(e,t){"use strict";function i(){if(void 0!==c)return c;var t="undetected",n="undetected";if(navigator.nodejs)return t=e.platform,c={platform:t,nodejs:!0,mobile:"ios"===t||"android"===t};var i=navigator.userAgent;return i.match(/(iPad|iPhone|iPod)/g)?t="ios":-1!==i.indexOf("Android")?t="android":-1!==i.indexOf("Linux")?t="linux":-1!==i.indexOf("Macintosh")?t="osx":-1!==i.indexOf("Windows")&&(t="windows"),-1!==i.indexOf("Chrome")?(n="chrome",-1!==i.indexOf("OPR")?n="opera":-1!==i.indexOf("Chromium")&&(n="chromium")):-1!==i.indexOf("Safari")?n="safari":-1!==i.indexOf("Firefox")?n="firefox":-1!==i.indexOf("Trident")&&(n="ie",-1!==i.indexOf("MSIE 9")&&(n="ie9")),"ios"===t&&-1!==i.indexOf("CriOS")&&(n="chrome"),c={platform:t,browser:n,mobile:"ios"===t||"android"===t,nodejs:!1}}function s(){void 0===performance&&(performance={}),Date.now=Date.now||function(){return(new Date).getTime()},void 0===performance.now&&!function(){var e=Date.now();void 0!==performance.timing&&void 0!==performance.timing.navigationStart&&(e=performance.timing.navigationStart),performance.now=function(){return Date.now()-e}}()}function o(){var e=(new Date).getTime(),t=new Array(64).join("x");return t=t.replace(/[xy]/g,function(t){var n=(e+16*Math.random())%16|0;return e=Math.floor(e/16),("x"==t?n:3&n|8).toString(16).toUpperCase()})}function a(e){"function"!=typeof e.Promise&&(e.Promise=function(e){this.executor=e},e.Promise.prototype.then=function(e,t){"function"!=typeof e&&(e=function(){}),"function"!=typeof t&&(t=function(){}),this.executor(e,t)})}function r(){var e=i();"ie"===e.browser?a(window):e.nodejs===!0&&a(t),s()}Object.defineProperty(n,"__esModule",{value:!0}),n.getDevice=i,n.polyfillPerformance=s,n.generateUUID=o,n.polyfillPromise=a,n.polyfill=r;var c=void 0}).call(this,e("_process"),"undefined"!=typeof global?global:"undefined"!=typeof self?self:"undefined"!=typeof window?window:{})},{_process:1}]},{},[8]);
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],26:[function(require,module,exports){
 module.exports={
-  "Melodic sounds": {
-    "Piano": {
-      "Acoustic Grand Piano": 0,
-      "Bright Acoustic Piano": 1,
-      "Electric Grand Piano": 2,
-      "Honky-tonk Piano": 3,
-      "Electric Piano 1": 4,
-      "Electric Piano 2": 5,
-      "Harpsichord":6,
-      "Clavinet": 7
-    },
-    "Chromatic Percussion": {
-      "Celesta": 8,
-      "Glockenspiel": 9,
-      "Music Box": 10,
-      "Vibraphone": 11,
-      "Marimba": 12,
-      "Xylophone": 13,
-      "Tubular Bells": 14,
-      "Dulcimer": 15
-    },
-    "Organ": {
-      "Drawbar Organ": 16,
-      "Percussive Organ": 17,
-      "Rock Organ": 18,
-      "Church Organ": 19,
-      "Reed Organ": 20,
-      "Accordion": 21,
-      "Harmonica": 22,
-      "Tango Accordion": 23
-    },
-    "Guitar": {
-      "Acoustic Guitar (nylon)": 24,
-      "Acoustic Guitar (steel)": 25,
-      "Electric Guitar (jazz)": 26,
-      "Electric Guitar (clean)": 27,
-      "Electric Guitar (muted)": 28,
-      "Overdriven Guitar": 29,
-      "Distortion Guitar": 30,
-      "Guitar Harmonics": 31
-    },
-    "Bass": {
-      "Acoustic Bass": 32,
-      "Electric Bass (finger)": 33,
-      "Electric Bass (pick)": 34,
-      "Fretless Bass": 35,
-      "Slap Bass 1": 36,
-      "Slap Bass 2": 37,
-      "Synth Bass 1": 38,
-      "Synth Bass 2": 39
-    },
-    "Strings": {
-      "Violin": 40,
-      "Viola": 41,
-      "Cello": 42,
-      "Contrabass": 43,
-      "Tremolo Strings": 44,
-      "Pizzicato Strings": 45,
-      "Orchestral Harp": 46,
-      "Timpani": 47
-    },
-    "Ensemble": {
-      "Strings1": 48,
-      "Strings2": 49,
-      "Synth Strings 1": 50,
-      "Synth Strings 2": 51,
-      "Choir Aah": 52,
-      "Voice Ooh": 53,
-      "Synth Voice": 54,
-      "Orchestral Hit": 55
-    },
-    "Brass": {
-      "Trumpet": 56,
-      "Trombone": 57,
-      "Tuba": 58,
-      "Muted Trumpet": 59,
-      "French Horn": 60,
-      "Brass Section": 61,
-      "Synth Brass 1": 62,
-      "Synth Brass 2": 63
-    },
-    "Reed": {
-      "Soprano Sax": 64,
-      "Alto Sax": 65,
-      "Tenor Sax": 66,
-      "Baritone Sax": 67,
-      "Oboe": 68,
-      "English Horn": 69,
-      "Bassoon": 70,
-      "Clarinet": 71
-    },
-    "Pipe": {
-      "Piccolo": 72,
-      "Flute": 73,
-      "Recorder": 74,
-      "Pan Flute": 75,
-      "Blown Bottle": 76,
-      "Shakuhachi": 77,
-      "Whistle": 78,
-      "Ocarina": 79
-    },
-    "Synth Lead": {
-      "Lead 1 (square)": 80,
-      "Lead 2 (sawtooth)": 81,
-      "Lead 3 (calliope)": 82,
-      "Lead 4 (chiff)": 83,
-      "Lead 5 (charang)": 84,
-      "Lead 6 (voice)": 85,
-      "Lead 7 (fifths)": 86,
-      "Lead 8 (bass + lead)": 87
-    },
-    "Synth Pad": {
-      "Pad 1 (new age)": 88,
-      "Pad 2 (warm)": 89,
-      "Pad 3 (polysynth)": 90,
-      "Pad 4 (choir)": 91,
-      "Pad 5 (bowed)": 92,
-      "Pad 6 (metallic)": 93,
-      "Pad 7 (halo)": 94,
-      "Pad 8 (sweep)": 95
-    },
-    "Synth Effects": {
-      "FX 1 (rain)": 96,
-      "FX 2 (soundtrack)": 97,
-      "FX 3 (crystal)": 98,
-      "FX 4 (atmosphere)": 99,
-      "FX 5 (brightness)": 100,
-      "FX 6 (goblins)": 101,
-      "FX 7 (echoes)": 102,
-      "FX 8 (sci-fi)": 103
-    },
-    "Ethnic": {
-      "Sitar": 104,
-      "Banjo": 105,
-      "Shamisen": 106,
-      "Koto": 107,
-      "Kalimba": 108,
-      "Bagpipe": 109,
-      "Fiddle": 110,
-      "Shanai": 111
-    },
-    "Percussive": {
-      "Tinkle Bell": 112,
-      "Agogo": 113,
-      "Steel Drums": 114,
-      "Woodblock": 115,
-      "Taiko Drum": 116,
-      "Melodic Tom": 117,
-      "Synth Drum": 118
-    },
-    "Sound effects": {
-      "Reverse Cymbal": 119,
-      "Guitar Fret Noise": 120,
-      "Breath Noise": 121,
-      "Seashore": 122,
-      "Bird Tweet": 123,
-      "Telephone Ring": 124,
-      "Helicopter": 125,
-      "Applause": 126,
-      "Gunshot": 127
-    }
+  "Piano": {
+    "Acoustic Grand Piano": 0,
+    "Bright Acoustic Piano": 1,
+    "Electric Grand Piano": 2,
+    "Honky-tonk Piano": 3,
+    "Electric Piano 1": 4,
+    "Electric Piano 2": 5,
+    "Harpsichord": 6,
+    "Clavinet": 7
   },
-  "Percussion": {
-    "Bass Drum 2": 35,
-    "Bass Drum 1": 36,
-    "Side Stick/Rimshot": 37,
-    "Snare Drum 1": 38,
-    "Hand Clap": 39,
-    "Snare Drum 2": 40,
-    "Low Tom 2": 41,
-    "Closed Hi-hat": 42,
-    "Low Tom 1": 43,
-    "Pedal Hi-hat": 44,
-    "Mid Tom 2": 45,
-    "Open Hi-hat": 46,
-    "Mid Tom 1": 47,
-    "High Tom 2": 48,
-    "Crash Cymbal 1": 49,
-    "High Tom 1": 50,
-    "Ride Cymbal 1": 51,
-    "Chinese Cymbal": 52,
-    "Ride Bell": 53,
-    "Tambourine": 54,
-    "Splash Cymbal": 55,
-    "Cowbell": 56,
-    "Crash Cymbal 2": 57,
-    "Vibra Slap": 58,
-    "Ride Cymbal 2": 59,
-    "High Bongo": 60,
-    "Low Bongo": 61,
-    "Mute High Conga": 62,
-    "Open High Conga": 63,
-    "Low Conga": 64,
-    "High Timbale": 65,
-    "Low Timbale": 66,
-    "High Agogô": 67,
-    "Low Agogô": 68,
-    "Cabasa": 69,
-    "Maracas": 70,
-    "Short Whistle": 71,
-    "Long Whistle": 72,
-    "Short Güiro": 73,
-    "Long Güiro": 74,
-    "Claves": 75,
-    "High Wood Block": 76,
-    "Low Wood Block": 77,
-    "Mute Cuíca": 78,
-    "Open Cuíca": 79,
-    "Mute Triangle": 80,
-    "Open Triangle": 81
+  "Chromatic Percussion": {
+    "Celesta": 8,
+    "Glockenspiel": 9,
+    "Music Box": 10,
+    "Vibraphone": 11,
+    "Marimba": 12,
+    "Xylophone": 13,
+    "Tubular Bells": 14,
+    "Dulcimer": 15
+  },
+  "Organ": {
+    "Drawbar Organ": 16,
+    "Percussive Organ": 17,
+    "Rock Organ": 18,
+    "Church Organ": 19,
+    "Reed Organ": 20,
+    "Accordion": 21,
+    "Harmonica": 22,
+    "Tango Accordion": 23
+  },
+  "Guitar": {
+    "Acoustic Guitar (nylon)": 24,
+    "Acoustic Guitar (steel)": 25,
+    "Electric Guitar (jazz)": 26,
+    "Electric Guitar (clean)": 27,
+    "Electric Guitar (muted)": 28,
+    "Overdriven Guitar": 29,
+    "Distortion Guitar": 30,
+    "Guitar Harmonics": 31
+  },
+  "Bass": {
+    "Acoustic Bass": 32,
+    "Electric Bass (finger)": 33,
+    "Electric Bass (pick)": 34,
+    "Fretless Bass": 35,
+    "Slap Bass 1": 36,
+    "Slap Bass 2": 37,
+    "Synth Bass 1": 38,
+    "Synth Bass 2": 39
+  },
+  "Strings": {
+    "Violin": 40,
+    "Viola": 41,
+    "Cello": 42,
+    "Contrabass": 43,
+    "Tremolo Strings": 44,
+    "Pizzicato Strings": 45,
+    "Orchestral Harp": 46,
+    "Timpani": 47
+  },
+  "Ensemble": {
+    "Strings1": 48,
+    "Strings2": 49,
+    "Synth Strings 1": 50,
+    "Synth Strings 2": 51,
+    "Choir Aah": 52,
+    "Voice Ooh": 53,
+    "Synth Voice": 54,
+    "Orchestral Hit": 55
+  },
+  "Brass": {
+    "Trumpet": 56,
+    "Trombone": 57,
+    "Tuba": 58,
+    "Muted Trumpet": 59,
+    "French Horn": 60,
+    "Brass Section": 61,
+    "Synth Brass 1": 62,
+    "Synth Brass 2": 63
+  },
+  "Reed": {
+    "Soprano Sax": 64,
+    "Alto Sax": 65,
+    "Tenor Sax": 66,
+    "Baritone Sax": 67,
+    "Oboe": 68,
+    "English Horn": 69,
+    "Bassoon": 70,
+    "Clarinet": 71
+  },
+  "Pipe": {
+    "Piccolo": 72,
+    "Flute": 73,
+    "Recorder": 74,
+    "Pan Flute": 75,
+    "Blown Bottle": 76,
+    "Shakuhachi": 77,
+    "Whistle": 78,
+    "Ocarina": 79
+  },
+  "Synth Lead": {
+    "Lead 1 (square)": 80,
+    "Lead 2 (sawtooth)": 81,
+    "Lead 3 (calliope)": 82,
+    "Lead 4 (chiff)": 83,
+    "Lead 5 (charang)": 84,
+    "Lead 6 (voice)": 85,
+    "Lead 7 (fifths)": 86,
+    "Lead 8 (bass + lead)": 87
+  },
+  "Synth Pad": {
+    "Pad 1 (new age)": 88,
+    "Pad 2 (warm)": 89,
+    "Pad 3 (polysynth)": 90,
+    "Pad 4 (choir)": 91,
+    "Pad 5 (bowed)": 92,
+    "Pad 6 (metallic)": 93,
+    "Pad 7 (halo)": 94,
+    "Pad 8 (sweep)": 95
+  },
+  "Synth Effects": {
+    "FX 1 (rain)": 96,
+    "FX 2 (soundtrack)": 97,
+    "FX 3 (crystal)": 98,
+    "FX 4 (atmosphere)": 99,
+    "FX 5 (brightness)": 100,
+    "FX 6 (goblins)": 101,
+    "FX 7 (echoes)": 102,
+    "FX 8 (sci-fi)": 103
+  },
+  "Ethnic": {
+    "Sitar": 104,
+    "Banjo": 105,
+    "Shamisen": 106,
+    "Koto": 107,
+    "Kalimba": 108,
+    "Bagpipe": 109,
+    "Fiddle": 110,
+    "Shanai": 111
+  },
+  "Percussive": {
+    "Tinkle Bell": 112,
+    "Agogo": 113,
+    "Steel Drums": 114,
+    "Woodblock": 115,
+    "Taiko Drum": 116,
+    "Melodic Tom": 117,
+    "Synth Drum": 118
+  },
+  "Sound effects": {
+    "Reverse Cymbal": 119,
+    "Guitar Fret Noise": 120,
+    "Breath Noise": 121,
+    "Seashore": 122,
+    "Bird Tweet": 123,
+    "Telephone Ring": 124,
+    "Helicopter": 125,
+    "Applause": 126,
+    "Gunshot": 127
+  },
+  "percussion": {
+    "drumset 0": 128,
+    "drumset 1": 129,
+    "drumset 2": 130,
+    "drumset 3": 131,
+    "drumset 4": 132,
+    "drumset 5": 133,
+    "drumset 6": 134,
+    "drumset 7": 135,
+    "drumset 8": 136,
+    "drumset 9": 137,
+    "drumset 10": 138,
+    "drumset 11": 139,
+    "drumset 12": 140,
+    "drumset 13": 141,
+    "drumset 14": 142,
+    "drumset 15": 143,
+    "drumset 16": 144,
+    "drumset 17": 145,
+    "drumset 18": 146,
+    "drumset 19": 147,
+    "drumset 24": 152,
+    "drumset 25": 153,
+    "drumset 32": 160,
+    "drumset 33": 161,
+    "drumset 34": 162,
+    "drumset 35": 163,
+    "drumset 36": 164,
+    "drumset 40": 168,
+    "drumset 41": 169,
+    "drumset 42": 170,
+    "drumset 48": 176,
   }
 }
 
 
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /*
 class to parse the .mid file format
 (depends on stream.js)
@@ -3485,7 +3463,7 @@ module.exports = function (data) {
 		'tracks': tracks
 	}
 };
-},{"./stream":29}],28:[function(require,module,exports){
+},{"./stream":28}],27:[function(require,module,exports){
 var clone = function (o) {
 	if (typeof o != 'object') return (o);
 	if (o == null) return (o);
@@ -3590,7 +3568,7 @@ module.exports = function (midiFile, timeWarp, eventProcessor, bpm) {
 	};
 };
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 /* Wrapper for accessing strings through sequential reads */
 module.exports = function (str) {
     var position = 0;
@@ -3660,7 +3638,7 @@ module.exports = function (str) {
         'readVarInt': readVarInt
     }
 };
-},{}],30:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 /**
  * @license -------------------------------------------------------------------
  *   module: Base64Binary
@@ -3742,7 +3720,7 @@ module.exports = {
 		return uarray;	
 	}
 };
-},{}],31:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var midi = function () {
     var api = {};
     var loader = require('./midi/loader')();
@@ -3752,7 +3730,7 @@ var midi = function () {
 
 module.exports = midi;
 window.globalmidi = midi;
-},{"./midi/loader":34,"./midi/player":35}],32:[function(require,module,exports){
+},{"./midi/loader":33,"./midi/player":34}],31:[function(require,module,exports){
 /*
 	----------------------------------------------------------
 	MIDI.audioDetect : 0.3.2 : 2015-03-26
@@ -3849,7 +3827,7 @@ var audioDetect = function(onsuccess) {
 };
 
 module.exports = audioDetect;
-},{}],33:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /*
  ----------------------------------------------------------
  GeneralMIDI
@@ -3861,9 +3839,6 @@ var _ = {
 };
 root.GM = (function () {
     var instruments = require('../instruments.json');
-    var melodic_sounds = instruments['Melodic sounds'];
-    var percussion = instruments['Percussion'];
-
     var clean = function (name) {
         return name.replace(/[^a-z0-9 ]/gi, '').replace(/[ ]/g, '_').toLowerCase();
     };
@@ -3871,7 +3846,7 @@ root.GM = (function () {
     var res = {
         byId: function(id){
             var ins;
-            _.find(melodic_sounds, function(categorie, key){
+            _.find(instruments, function(categorie, key){
                 var result = _.find(categorie, function(instrument, key){
                     if(instrument == id){
                         ins = {};
@@ -3891,7 +3866,7 @@ root.GM = (function () {
         },
         byName: function(name){
             var ins;
-            _.find(melodic_sounds, function(categorie, key){
+            _.find(instruments, function(categorie, key){
                 var result = _.find(categorie, function(instrument, key){
                     if(name == key){
                         ins = {};
@@ -3911,7 +3886,7 @@ root.GM = (function () {
         },
         byCleanName: function(name){
             var ins;
-            _.find(melodic_sounds, function(categorie, key){
+            _.find(instruments, function(categorie, key){
                 var result = _.find(categorie, function(instrument, key){
                     if(name == clean(key)){
                         ins = {};
@@ -3930,7 +3905,7 @@ root.GM = (function () {
             return ins;
         },
         byCategory: function(cat){
-            return _.find(melodic_sounds, function(categorie, key){
+            return _.find(instruments, function(categorie, key){
                 return cat == key;
             })
         }
@@ -4030,7 +4005,7 @@ root.noteToKey = {}; // 108 ==  C8
 })();
 
 module.exports = root
-},{"../instruments.json":26,"lodash.find":14}],34:[function(require,module,exports){
+},{"../instruments.json":25,"lodash.find":14}],33:[function(require,module,exports){
 /**
  ----------------------------------------------------------
  MIDI.Plugin : 0.3.4 : 2015-03-26
@@ -4171,10 +4146,6 @@ module.exports = function() {
                 if (generalMIDI.GM.byId(instrument)) {
                     var ins = generalMIDI.GM.byId(instrument);
                     instruments[i] = ins.id;
-                    // if the instrument is a percussion add it to channel 10
-                    if(ins['category'] === 'Percussive'){
-                        root.channels[9].instrument = ins.number;
-                    }
                 }
             }
         }
@@ -4265,7 +4236,7 @@ module.exports = function() {
 
     return root;
 };
-},{"../util/dom_request_script":39,"../util/dom_request_xhr":40,"./audioDetect":32,"./gm":33,"./player":35,"./plugin.audiotag":36,"./plugin.webaudio":37,"./plugin.webmidi":38,"lodash.merge":21}],35:[function(require,module,exports){
+},{"../util/dom_request_script":38,"../util/dom_request_xhr":39,"./audioDetect":31,"./gm":32,"./player":34,"./plugin.audiotag":35,"./plugin.webaudio":36,"./plugin.webmidi":37,"lodash.merge":21}],34:[function(require,module,exports){
 /*
  ----------------------------------------------------------
  MIDI.Player : 0.3.1 : 2015-03-26
@@ -4291,9 +4262,9 @@ module.exports = function (MIDI) {
             if (midi.currentTime < -1) {
                 midi.currentTime = -1;
             }
+            midi.setChannelInstruments(midi.currentTime);
             startAudio(midi.currentTime, null, onsuccess);
         };
-
     midi.pause = function () {
         var tmp = midi.restart;
         stopAudio();
@@ -4376,11 +4347,11 @@ module.exports = function (MIDI) {
         midi.endTime = getLength();
         midi.tracks = midi.getFileTracks();
         midi.instruments = midi.getFileInstruments();
+
         MIDI.loadResource(
             {
                 instruments: midi.instruments,
                 onsuccess: function () {
-                    console.log('reconnect')
                     MIDI.reconnect(onsuccess);
                 },
                 onprogress: onprogress,
@@ -4437,6 +4408,36 @@ module.exports = function (MIDI) {
         }
         return tracks;
     }
+
+    midi.setChannelInstruments = function(currentTime){
+
+        var instruments = {};
+        var programs = {};
+        var events = {};
+
+        for (var n = 0; n < midi.data.length; n++) {
+            var event = midi.data[n][0].event;
+            if (event.type !== 'channel') {
+                continue;
+            }
+            var channel = event.channel;
+            switch (event.subtype) {
+                case 'programChange':
+                    if(event.deltaTime <=  currentTime){
+                        events[event.channel] = event;
+                    }
+                    break;
+            }
+        }
+        for (var key in events) {
+            if (key == 9) {
+                MIDI.programChange(key, events[key].programNumber + 128, 0);
+            } else  {
+                MIDI.programChange(key, events[key].programNumber, 0);
+            }
+        }
+    };
+
     midi.getFileInstruments = function () {
         var instruments = {};
         var programs = {};
@@ -4449,15 +4450,15 @@ module.exports = function (MIDI) {
             }
             var channel = event.channel;
             switch (event.subtype) {
-                case 'controller':
-                    (event)
-//				console.log(event.channel, MIDI.defineControl[event.controllerType], event.value);
-                    break;
                 case 'programChange':
-                    programs[channel] = event.programNumber;
-                    var gm = generalMIDI.GM.byId(event.programNumber);
-                    instruments[gm.id] = true;
-
+                    if (channel == 9) {
+                        // The drumset is outside of the general midi spectrum, so we just added them after 127
+                        var gm = generalMIDI.GM.byId(event.programNumber + 128);
+                        instruments[gm.id] = true;
+                    } else {
+                        var gm = generalMIDI.GM.byId(event.programNumber);
+                        instruments[gm.id] = true;
+                    }
                     break;
             }
         }
@@ -4574,14 +4575,16 @@ module.exports = function (MIDI) {
         ///
         for (var n = 0; n < length && messages < 100; n++) {
             var obj = data[n];
+            var event = obj[0].event;
             if ((queuedTime += obj[1]) < currentTime) {
                 offset = queuedTime;
                 continue;
             }
+
             ///
             currentTime = queuedTime - offset;
             ///
-            var event = obj[0].event;
+
             if (event.type !== 'channel') {
                 continue;
             }
@@ -4596,8 +4599,10 @@ module.exports = function (MIDI) {
                     MIDI.setController(channelId, event.controllerType, event.value, delay);
                     break;
                 case 'programChange':
-                    // the percussion should not be set from the midi, it is set in the loader.
-                    if (channelId != 9) {
+                    // The drumset is outside of the general midi spectrum, so we just added them after 127
+                    if (channelId == 9) {
+                        MIDI.programChange(channelId, event.programNumber + 128, delay);
+                    } else  {
                         MIDI.programChange(channelId, event.programNumber, delay);
                     }
                     break;
@@ -4685,7 +4690,7 @@ module.exports = function (MIDI) {
     return midi;
 };
 
-},{"../jasmid/midifile":27,"../jasmid/replayer":28,"./gm":33}],36:[function(require,module,exports){
+},{"../jasmid/midifile":26,"../jasmid/replayer":27,"./gm":32}],35:[function(require,module,exports){
 /*
  ----------------------------------------------------------------------
  AudioTag <audio> - OGG or MPEG Soundbank
@@ -4841,7 +4846,7 @@ midi.reconnect = function(){
 
 }
 module.exports = midi;
-},{"../lib/Base64binary":30,"./gm":33}],37:[function(require,module,exports){
+},{"../lib/Base64binary":29,"./gm":32}],36:[function(require,module,exports){
 /*
  ----------------------------------------------------------
  Web Audio API - OGG or MPEG Soundbank
@@ -5082,7 +5087,6 @@ midi.getContext = function () {
 };
 
 midi.setContext = function (newCtx, onload, onprogress, onerror) {
-
     ctx = newCtx;
     /// tuna.js effects module - https://github.com/Dinahmoe/tuna
     if (typeof Tuna !== 'undefined' && !ctx.tunajs) {
@@ -5186,7 +5190,7 @@ function createAudioContext() {
 };
 
 module.exports = midi;
-},{"../lib/Base64binary":30,"./gm":33}],38:[function(require,module,exports){
+},{"../lib/Base64binary":29,"./gm":32}],37:[function(require,module,exports){
 /*
  ----------------------------------------------------------------------
  Web MIDI API - Native Soundbanks
@@ -5195,7 +5199,6 @@ module.exports = midi;
  ----------------------------------------------------------------------
  */
 'use strict';
-require('web-midi-api/WebMIDIAPI.min.js');
 var plugin = null;
 var output = null;
 var midi = {api: 'webmidi'};
@@ -5262,7 +5265,7 @@ midi.connect = function (opts) {
 };
 
 module.exports = midi;
-},{"web-midi-api/WebMIDIAPI.min.js":25}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /*
 	-----------------------------------------------------------
 	dom.loadScript.js : 0.1.4 : 2014/02/12 : http://mudcu.be
@@ -5488,7 +5491,7 @@ var globalExists = function(path, root) {
 if (typeof (module) !== "undefined" && module.exports) {
 	module.exports = dom;
 }
-},{}],40:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /*
  ----------------------------------------------------------
  util/Request : 0.1.1 : 2015-03-26
@@ -5627,6 +5630,6 @@ var request = function (opts, onsuccess, onerror, onprogress) {
 
 module.exports = request;
 
-},{}]},{},[31]);
+},{}]},{},[30]);
 
 //# sourceMappingURL=bundle.js.map
