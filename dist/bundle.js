@@ -3364,7 +3364,10 @@ module.exports={
 class to parse the .mid file format
 (depends on stream.js)
 */
-module.exports = function (data) {
+module.exports = function (data, transpose) {
+
+	transpose = transpose || 0;
+
 	var Stream = require('./stream');
 	var ticksPerBeat;
 	function readChunk(stream) {
@@ -3590,7 +3593,19 @@ module.exports = function (data) {
 		}
 		var trackStream = Stream(trackChunk.data);
 		while (!trackStream.eof()) {
+
 			var event = readEvent(trackStream);
+
+			if (event.subtype == "noteOn" || event.subtype == "noteOff") {
+
+				event.noteNumber = event.noteNumber + transpose;
+
+				if (event.noteNumber > 127 || event.noteNumber < 0) {
+					console.warn("MIDI.js: notes transposed out of bounds");
+				}
+
+			}
+
 			tracks[i].push(event);
 		}
 	}
@@ -4326,13 +4341,17 @@ module.exports = function() {
             if (!--pending) {
                 onprogress && onprogress('load', 1.0);
                 root =_.merge(root, context.connect(opts, root.channels));
+                
+                if (opts.onsuccess && typeof opts.onsuccess === "function") {
+                    opts.onsuccess();
+                }
             }
         };
     
         // If there are no instruments go ahead and trigger success cb
-        if (length == 0) {
+        if (length === 0) {
 
-            if (opts.onsuccess && typeof opts.onsuccess == "function") {
+            if (opts.onsuccess && typeof opts.onsuccess === "function") {
                 opts.onsuccess();
             }
 
@@ -4385,6 +4404,7 @@ module.exports = function() {
 
     return root;
 };
+
 },{"../util/dom_request_script":38,"../util/dom_request_xhr":39,"./audioDetect":31,"./gm":32,"./player":34,"./plugin.audiotag":35,"./plugin.webaudio":36,"./plugin.webmidi":37,"lodash.merge":21}],34:[function(require,module,exports){
 /*
  ----------------------------------------------------------
@@ -4399,6 +4419,7 @@ module.exports = function (MIDI) {
     var MidiFile = require('../jasmid/midifile');
     'use strict';
     var midi = {};
+    midi.transpose = 0;
     midi.tracks = {};
     midi.currentTime = 0;
     midi.endTime = 0;
@@ -4491,7 +4512,7 @@ module.exports = function (MIDI) {
     };
     // helpers
     midi.loadMidiFile = function (onsuccess, onprogress, onerror) {
-        midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null);
+        midi.replayer = new Replayer(MidiFile(midi.currentData, midi.transpose), midi.timeWarp, null);
         midi.data = midi.replayer.getData();
         midi.endTime = getLength();
         midi.tracks = midi.getFileTracks();
@@ -4668,6 +4689,7 @@ module.exports = function (MIDI) {
 
     var getLength = function () {
         var data = midi.data;
+
         var length = data.length;
         var totalTime = 0.5;
         for (var n = 0; n < length; n++) {
@@ -5779,6 +5801,7 @@ var request = function (opts, onsuccess, onerror, onprogress) {
 
 module.exports = request;
 
-},{}]},{},[30]);
+},{}]},{},[30])
+
 
 //# sourceMappingURL=bundle.js.map

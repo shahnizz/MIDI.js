@@ -92,8 +92,9 @@
 
 				/// this sets up the MIDI.Player and gets things going...
 				player = midi.Player;
+				player.transpose = 12;
 				player.timeWarp = 1; // speed the song is played back
-				player.loadFile(song[songid++ % song.length], player.start);
+				player.loadFile(song[0], player.start);
 			}
 		});
 	}

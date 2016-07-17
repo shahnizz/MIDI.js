@@ -2,7 +2,10 @@
 class to parse the .mid file format
 (depends on stream.js)
 */
-module.exports = function (data) {
+module.exports = function (data, transpose) {
+
+	transpose = transpose || 0;
+
 	var Stream = require('./stream');
 	var ticksPerBeat;
 	function readChunk(stream) {
@@ -228,7 +231,19 @@ module.exports = function (data) {
 		}
 		var trackStream = Stream(trackChunk.data);
 		while (!trackStream.eof()) {
+
 			var event = readEvent(trackStream);
+
+			if (event.subtype == "noteOn" || event.subtype == "noteOff") {
+
+				event.noteNumber = event.noteNumber + transpose;
+
+				if (event.noteNumber > 127 || event.noteNumber < 0) {
+					console.warn("MIDI.js: notes transposed out of bounds");
+				}
+
+			}
+
 			tracks[i].push(event);
 		}
 	}
