@@ -183,21 +183,33 @@ module.exports = function() {
                 root =_.merge(root, context.connect(opts, root.channels));
             }
         };
-        ///
-        for (var i = 0; i < length; i++) {
-            var instrumentId = instruments[i];
-            if (window.MIDI.Soundfont[instrumentId]) { // already loaded
-                waitForEnd();
-            } else { // needs to be requested
-                sendRequest(instruments[i], audioFormat, function (evt, progress) {
-                    var fileProgress = progress / length;
-                    var queueProgress = (length - pending) / length;
-                    onprogress && onprogress('load', fileProgress + queueProgress, instrumentId);
-                }, function () {
-                    waitForEnd();
-                }, onerror);
+    
+        // If there are no instruments go ahead and trigger success cb
+        if (length == 0) {
+
+            if (opts.onsuccess && typeof opts.onsuccess == "function") {
+                opts.onsuccess();
             }
-        };
+
+        } else {
+
+            for (var i = 0; i < length; i++) {
+            var instrumentId = instruments[i];
+                if (window.MIDI.Soundfont[instrumentId]) { // already loaded
+                    waitForEnd();
+                } else { // needs to be requested
+                    sendRequest(instruments[i], audioFormat, function (evt, progress) {
+                        var fileProgress = progress / length;
+                        var queueProgress = (length - pending) / length;
+                        onprogress && onprogress('load', fileProgress + queueProgress, instrumentId);
+                    }, function () {
+                        waitForEnd();
+                    }, onerror);
+                }
+            };
+
+        }
+
     };
 
     var sendRequest = function (instrumentId, audioFormat, onprogress, onsuccess, onerror) {
