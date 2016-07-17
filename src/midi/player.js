@@ -11,6 +11,7 @@ module.exports = function (MIDI) {
     var MidiFile = require('../jasmid/midifile');
     'use strict';
     var midi = {};
+    midi.transpose = 0;
     midi.tracks = {};
     midi.currentTime = 0;
     midi.endTime = 0;
@@ -103,7 +104,7 @@ module.exports = function (MIDI) {
     };
     // helpers
     midi.loadMidiFile = function (onsuccess, onprogress, onerror) {
-        midi.replayer = new Replayer(MidiFile(midi.currentData), midi.timeWarp, null);
+        midi.replayer = new Replayer(MidiFile(midi.currentData, midi.transpose), midi.timeWarp, null);
         midi.data = midi.replayer.getData();
         midi.endTime = getLength();
         midi.tracks = midi.getFileTracks();
@@ -280,6 +281,7 @@ module.exports = function (MIDI) {
 
     var getLength = function () {
         var data = midi.data;
+
         var length = data.length;
         var totalTime = 0.5;
         for (var n = 0; n < length; n++) {
