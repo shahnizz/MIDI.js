@@ -181,13 +181,17 @@ module.exports = function() {
             if (!--pending) {
                 onprogress && onprogress('load', 1.0);
                 root =_.merge(root, context.connect(opts, root.channels));
+                
+                if (opts.onsuccess && typeof opts.onsuccess === "function") {
+                    opts.onsuccess();
+                }
             }
         };
     
         // If there are no instruments go ahead and trigger success cb
-        if (length == 0) {
+        if (length === 0) {
 
-            if (opts.onsuccess && typeof opts.onsuccess == "function") {
+            if (opts.onsuccess && typeof opts.onsuccess === "function") {
                 opts.onsuccess();
             }
 
